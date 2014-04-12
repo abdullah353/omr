@@ -20,7 +20,9 @@ public class OmrView extends JFrame{
 	protected JButton browse = new JButton("Browse"),
 						scan = new JButton("Scan");
 
-
+	/*
+	 * Initializing Frame
+	 */
 	public OmrView(OmrModel sheet){
 		this.sheet=sheet;
 		centreWindow(this);
@@ -29,7 +31,8 @@ public class OmrView extends JFrame{
 	}
 
 	/*
-	 * Center Windows Frame
+	 * Center Window Frame
+	 * Arguments JFrame
 	 */
 	private static void centreWindow(Window frame) {
 		Dimension dimension = Toolkit.getDefaultToolkit().getScreenSize();
@@ -37,12 +40,20 @@ public class OmrView extends JFrame{
 		int y=(int)((dimension.getHeight() - 150)/2);
 		frame.setLocation(x, y);
 	}
-	
-	
 
-
+	/*
+	 * Clear Our Main View
+	 */
 	protected void cleanView(){
 		main.removeAll();
+	}
+	
+	/*
+	 * Rendering SubView on Main window
+	 * Arguments JPanel, (Optional) boolean
+	 */
+	protected void subView(JPanel panel){
+		subView(panel,true);
 	}
 	protected void subView(JPanel panel,boolean state){
 		if(state) main.add(panel);
@@ -50,6 +61,10 @@ public class OmrView extends JFrame{
 		setContentPane(main);
 		if(main.isVisible())setVisible(true);
 	}
+	/*
+	 * Browser GUI
+	 * @return JPanel
+	 */
 	protected JPanel browsePanel(){
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(20,0, 0, 0));
@@ -60,23 +75,24 @@ public class OmrView extends JFrame{
 		panel.add(filename);
 		return panel;
 	}
+	/*
+	 * Scan GUI
+	 * @return JPanel
+	 */
 	public JPanel scanPanel(){
 		JPanel panel = new JPanel();
 		panel.setLayout(new FlowLayout());
 		panel.add(scan);
 		return panel;
 	}
-	
+
 	/*
-	 *  Drawing Components on Frame
+	 *  Main window which will hold all SubViews
 	 */
 	class DrawComponent extends JPanel{
 		public DrawComponent(){
 			setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		}
-		
 	}
-	protected void toggleSubView(JPanel panel,boolean state){
-		subView(panel,state);
-	}
+
 }
