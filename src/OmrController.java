@@ -47,7 +47,17 @@ class OmrController {
 	class Scan implements ActionListener{
 		public void actionPerformed(ActionEvent e){
 			System.out.println("Start Scanning");
-			sheet.validMarkers();
+			sheet.init();
+			if(sheet.searchUnit()){
+				System.out.println("Unit Found TwoUnit="+sheet.twounit+" unit="+sheet.unit);
+				if(sheet.checkAnchors())
+					System.out.println("Anchors Checked");
+				else
+					System.out.println("Can't Validate Achors");
+			}else{
+				sheet.resetModel();
+				System.out.println("Can't Found Unit");
+			}
 		}
 	}
 }
