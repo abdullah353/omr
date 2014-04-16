@@ -16,7 +16,6 @@ public class OmrView extends JFrame{
 	JPanel main;
 	protected JTextField filename = new JTextField(30),
 						 dir = new JTextField(80);
-	protected boolean hasfile = false;
 	protected JButton browse = new JButton("Browse"),
 						scan = new JButton("Scan");
 
