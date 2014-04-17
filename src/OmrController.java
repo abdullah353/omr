@@ -1,9 +1,11 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import java.util.Arrays;
+
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 class OmrController {
 	OmrModel sheet;
@@ -50,11 +52,21 @@ class OmrController {
 			sheet.init();
 			if(sheet.searchUnit()){
 				System.out.println("Unit Found TwoUnit="+sheet.twounit+" unit="+sheet.unit);
-				if(sheet.checkAnchors())
+				if(sheet.checkAnchors()){
 					System.out.println("Anchors Checked");
-				else
+					//setting up all questions
+					sheet.setQuestions(6);
+						//sheet.questions.addQuestion(0, 6);
+					sheet.questions.addAllQuestions();
+					int[] a = sheet.questions.getAllOptions();
+					System.out.print("b = "+Arrays.toString(a));
+					sheet.questions.addAllQuestions();
+					//int[] result = sheet.questions.getAllOptions();
+					//System.out.println("Result for 6 is "+result.toString());
+				}else{
 					System.out.println("Can't Validate Achors");
 					sheet.resetModel();
+				}
 			}else{
 				sheet.resetModel();
 				System.out.println("Can't Found Unit");
