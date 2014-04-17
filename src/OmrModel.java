@@ -1,11 +1,14 @@
 
 import helper.Point;
+import helper.Question;
 import helper.Rectangle;
 
 import java.awt.Color;
+import java.awt.List;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
@@ -78,17 +81,30 @@ public class OmrModel extends Config{
 	 */
 	public boolean searchUnit(){
 		boolean flag;
+		System.out.println("Looking for Unit");
 		//Do not look For Complete Height
 		for (int y = 10; y < image.getHeight(); y++) {
 			flag= false;
 			for (int x = 0; x < image.getWidth(); x++) {
-				if (isblackp(x,y))
+				if (isblackp(x,y)){
 					if(mtlst.isempty()){
 						flag = true;
+						System.out.println("First black at"+x+","+y);
 						mtlst.setP(x, y);
-					}else mtlend.setP(x, y);
-				else if(flag && !mtlst.isempty() && !mtlend.isempty()) 
-					if(foundMarker()) break;
+					}else {
+						System.out.println("Next black at"+x+","+y);
+						mtlend.setP(x, y);
+					}
+				}else{
+					if(flag && !mtlst.isempty() && !mtlend.isempty()){
+						System.out.println("found flag true with non empty points");
+						if(foundMarker()) {
+							break;
+						}
+					}
+				
+					
+				}
 			}
 		}
 		return (twounit == 0)? false: true;
@@ -135,7 +151,7 @@ public class OmrModel extends Config{
 		/***
 		 * BLOCK#5
 		 */
-		System.out.println("Can't verifyMarker");
+		System.out.println("Can't verifyMarker twounit = "+exp2U);
 		/***
 		 * END BLOCK#5
 		 */
@@ -154,9 +170,12 @@ public class OmrModel extends Config{
 	 * @return boolean
 	 */
 	public boolean checkAnchors(){
-		mtl.setCorn(new Point(2*twounit,twounit), new Point(10*twounit,2*twounit));
-		mcl.setCorn(new Point(2*twounit,14*twounit), new Point(10*twounit,15*twounit));
-		mrr.setCorn(new Point(29*twounit,56*twounit), new Point(37*twounit,57*twounit));
+		mtl.setCorn(new Point(layout[firstmark][x0]*twounit,layout[firstmark][y0]*twounit),
+					new Point(layout[firstmark][x1]*twounit,layout[firstmark][y1]*twounit));
+		mcl.setCorn(new Point(layout[secondmark][x0]*twounit,layout[secondmark][y0]*twounit),
+					new Point(layout[secondmark][x1]*twounit,layout[secondmark][y1]*twounit));
+		mrr.setCorn(new Point(layout[thirdmark][x0]*twounit,layout[thirdmark][y0]*twounit),
+					new Point(layout[thirdmark][x1]*twounit,layout[thirdmark][y1]*twounit));
 		/***
 		 * BLOCK#1: DELETE THIS BLOCK ITS FOR CONSOLE
 		 */
@@ -169,6 +188,11 @@ public class OmrModel extends Config{
 		if(mrr.isBlack()){
 			System.out.println("Third Anchor is valid");
 		}
+		showQBlueprint(q1,twounit,unit);
+		Question q = new Question(0, 6, image, twounit);
+		q.optOverview();
+		boolean[] a = q.viewfilled();
+		//System.out.print("b = "+Arrays.toString(a));
 		/***
 		 * END BLOCK#1
 		 */

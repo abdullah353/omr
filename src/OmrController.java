@@ -54,6 +54,7 @@ class OmrController {
 					System.out.println("Anchors Checked");
 				else
 					System.out.println("Can't Validate Achors");
+					sheet.resetModel();
 			}else{
 				sheet.resetModel();
 				System.out.println("Can't Found Unit");
