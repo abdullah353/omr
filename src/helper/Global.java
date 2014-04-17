@@ -3,8 +3,10 @@ package helper;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
+import config.Config;
 
-public class Global {
+
+public class Global extends Config{
 	protected BufferedImage image;
 	/****
 	 ** Constructor
@@ -18,7 +20,6 @@ public class Global {
 	 */
 	public boolean isblackp(int x,int y){
 		Color color = new Color(image.getRGB( x,y));
-		double thresh= 89.25;
 		return (color.getRed() <= thresh && color.getBlue() <= thresh 
 				&& color.getGreen() <= thresh)?true :false;
 	}

@@ -23,6 +23,7 @@ public class Rectangle extends Global{
 				else w++;
 			}
 		}
+		System.out.println("tl ="+tl.getp()+","+br.getp()+" White is"+w+" And Black is "+b);
 		return (w >= b)?false:true;
 	}
 	/***
@@ -33,5 +34,9 @@ public class Rectangle extends Global{
 	public void setCorn(Point p1, Point p2) {
 		tl = p1;
 		br = p2;
+	}
+	public void setCorn(int x0,int y0,int x1,int y1){
+		System.out.println("Setting points x0= "+x0+",y0="+y0+",x1= "+x1+",y1="+y1);
+		setCorn(new Point(x0, y0), new Point(x1,y1));
 	}
 }
