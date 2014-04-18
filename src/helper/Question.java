@@ -65,4 +65,13 @@ public class Question extends Config{
 		System.out.println((ans[nu][E][x0]*twounit+unit)+","+(ans[nu][E][y0]*twounit)+","+(ans[nu][E][x1]*twounit)+","+(ans[nu][E][y1]*twounit-unit));
 		System.out.println((ans[nu][F][x0]*twounit+unit)+","+(ans[nu][F][y0]*twounit)+","+(ans[nu][F][x1]*twounit)+","+(ans[nu][F][y1]*twounit-unit));
 	}
+	public int getResult(){
+		boolean[] allinfo = viewfilled();
+		for (int i = 0; i < allinfo.length; i++) {
+			if(allinfo[i]){
+				return i+1;
+			}
+		}
+		return -1;
+	}
 }

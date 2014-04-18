@@ -1,9 +1,14 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.IOException;
+import java.util.Arrays;
+
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import jxl.write.WriteException;
 
 class OmrController {
 	OmrModel sheet;
@@ -50,11 +55,28 @@ class OmrController {
 			sheet.init();
 			if(sheet.searchUnit()){
 				System.out.println("Unit Found TwoUnit="+sheet.twounit+" unit="+sheet.unit);
-				if(sheet.checkAnchors())
+				if(sheet.checkAnchors()){
 					System.out.println("Anchors Checked");
-				else
+					//setting up all questions
+					sheet.setQuestions(20);
+						//sheet.questions.addQuestion(0, 6);
+					sheet.questions.addAllQuestions();
+					int[] a = sheet.questions.getAllOptions();
+					System.out.print("b = "+Arrays.toString(a));
+					sheet.questions.addAllQuestions();
+					try {
+						sheet.questions.genExcel("test2", "Sheets");
+					} catch (WriteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}else{
 					System.out.println("Can't Validate Achors");
 					sheet.resetModel();
+				}
 			}else{
 				sheet.resetModel();
 				System.out.println("Can't Found Unit");

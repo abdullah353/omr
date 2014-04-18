@@ -1,7 +1,7 @@
 package config;
 
 public class Config {
-	public 	String DR;
+	public 	String DR,ext;
 	public double thresh= 169;
 	public boolean 	Debug = true,
 					extra = true;
@@ -58,7 +58,7 @@ public class Config {
 	};
 	public Config(){
 		DR="/";
-		
+		ext=".xls";
 		setlayout();
 		setAns();
 	}
