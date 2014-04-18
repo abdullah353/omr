@@ -2,6 +2,12 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
+import java.io.File; 
+import jxl.*; 
+import jxl.write.*; 
+import jxl.write.Number;
+import jxl.write.biff.RowsExceededException;
+
 
 public class Omr {
 	
@@ -11,7 +17,26 @@ public class Omr {
 		OmrModel sheet=new OmrModel();
 		OmrView view=new OmrView(sheet);
 		OmrController control=new OmrController(sheet, view);
-		control.startApp();
+		//control.startApp();
+		WritableWorkbook workbook = Workbook.createWorkbook(new File("output.xls"));
+		WritableSheet sheets = workbook.createSheet("First Sheet", 0);
+		Label label = new Label(0, 2, "A label record"); 
+		Label label2 = new Label(0, 0, "A label record"); 
+		Number number = new Number(3, 4, 3.1459); 
+		try {
+			sheets.addCell(label);
+			sheets.addCell(label2);
+			sheets.addCell(number);
+			workbook.write(); 
+			workbook.close();
+		} catch (RowsExceededException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (WriteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		
 		/*
 		File file1 = new File("/home/sam/OMRlayout.png");
 		BufferedImage image = ImageIO.read(file1);
