@@ -1,10 +1,17 @@
 package config;
 
+import java.io.IOException;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
 public class Config {
 	public 	String DR,ext;
 	public double thresh= 169;
 	public boolean 	Debug = true,
-					extra = true;
+					extra = true,
+					appendlog = false;
 	public int[][] layout;
 	//public int[][][] ans;
 	public int firstmark,
@@ -61,6 +68,16 @@ public class Config {
 		ext=".xls";
 		setlayout();
 		setAns();
+	}
+	public void setLog(String filename,FileHandler fh,Logger logger){
+		try {
+			fh=new FileHandler("log/"+filename+".log",appendlog);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		fh.setFormatter(new SimpleFormatter());
+		logger.addHandler(fh);
+		logger.setLevel(Level.ALL);
 	}
 	public void setlayout(){
 		x0 = firstmark	=0;

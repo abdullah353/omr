@@ -7,6 +7,9 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
@@ -19,6 +22,8 @@ public class OmrModel extends Config{
 	/*
 	 * Attributes
 	 */
+	private Logger logger = Logger.getLogger(OmrModel.class.getName());
+	private FileHandler fh;
 	String filename,path;
 	Rectangle mtl,mcl,mrr,qr;
 	Point mtlst,mtlend;
@@ -30,9 +35,10 @@ public class OmrModel extends Config{
 	 * Constructors
 	 */
 	public OmrModel(){
+		setLog("OmrModel",this.fh,this.logger);
+		logger.log(Level.INFO, "Create Model");
 		mtlst = new Point();
 		mtlend = new Point();
-		
 		unit = 0;
 		twounit = 0;
 	}
@@ -56,6 +62,7 @@ public class OmrModel extends Config{
 		 */
 		File file1 = new File(path+DR+filename);
 		try {
+			logger.log(Level.INFO, "Storing Image in Buffer");
 			this.image = ImageIO.read(file1);
 			setShapes();
 		} catch (IOException e) {
@@ -68,6 +75,7 @@ public class OmrModel extends Config{
 	 * Setting Objects in Models
 	 */
 	public void setShapes(){
+		logger.log(Level.INFO, "Creating 3 Markers and QR");
 		mtl	 =	new Rectangle(image);
 		mcl	 =	new Rectangle(image);
 		mrr	 =	new Rectangle(image);
@@ -80,7 +88,7 @@ public class OmrModel extends Config{
 	 */
 	public boolean searchUnit(){
 		boolean flag;
-		System.out.println("Looking for Unit");
+		logger.log(Level.INFO, "Searching for Unit Initiated");
 		//Do not look For Complete Height
 		for (int y = 10; y < image.getHeight(); y++) {
 			flag= false;
@@ -96,17 +104,17 @@ public class OmrModel extends Config{
 					}
 				}else{
 					if(flag && !mtlst.isempty() && !mtlend.isempty()){
-						System.out.println("found flag true with non empty points");
+						logger.log(Level.INFO, "found flag true with non empty points");
 						if(foundMarker()) {
-							break;
+							logger.log(Level.INFO, "Found Unit From Marker ");
+							return true;
 						}
 					}
-				
-					
 				}
 			}
 		}
-		return (twounit == 0)? false: true;
+		logger.log(Level.SEVERE, "Can't Found any Unit");
+		return false;
 	}
 	
 	/***
@@ -126,19 +134,14 @@ public class OmrModel extends Config{
 	 * @return boolean
 	 */
 	public boolean foundMarker(){
+		logger.log(Level.INFO ,"Checking Whether We Found Marker");
 		//Expected unit
 		int exp2U = 0,
 			experr = 1,
 			hi = 0;
 		exp2U = mtlst.gety();
-		/***
-		 * BLOCK#3 
-		 */
-		System.out.println("Checking Width twou is "+exp2U);
-		System.out.println("mtlst is"+mtlst.gety()+" 2twou is "+2*exp2U);
-		/***
-		 * END BLOCK#3
-		 */
+		
+		logger.log(Level.INFO ,"Setting Expected twounit is "+exp2U);
 		for (int yi = exp2U; yi < 2*exp2U; yi++)
 			if (isblackp(mtlst.getx(),yi))	hi++;
 		//Error Correction Not Optimized at the moment
@@ -147,13 +150,7 @@ public class OmrModel extends Config{
 			setUnit(exp2U);
 			return true;
 		}
-		/***
-		 * BLOCK#5
-		 */
-		System.out.println("Can't verifyMarker twounit = "+exp2U);
-		/***
-		 * END BLOCK#5
-		 */
+		logger.log(Level.WARNING ,"Expected Marker is wrong");
 		return false;
 	}
 	
@@ -190,8 +187,8 @@ public class OmrModel extends Config{
 		showQBlueprint(q1,twounit,unit);
 		
 		/***
-		 * END BLOCK#1
-		 */
+		* END BLOCK#1
+		*/
 		return (mtl.isBlack() && mcl.isBlack() && mrr.isBlack())?true:false;
 	}
 
