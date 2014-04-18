@@ -1,13 +1,14 @@
 
 import helper.Point;
 import helper.Question;
+import helper.Questions;
 import helper.Rectangle;
 
 import java.awt.Color;
-import java.awt.List;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import javax.imageio.ImageIO;
@@ -27,13 +28,14 @@ public class OmrModel extends Config{
 	public int 	unit,twounit;
 	BufferedImage image;
 	double rot=0.0,uerr;
-	
+	public Questions questions;
 	/*
 	 * Constructors
 	 */
 	public OmrModel(){
 		mtlst = new Point();
 		mtlend = new Point();
+		
 		unit = 0;
 		twounit = 0;
 	}
@@ -189,10 +191,7 @@ public class OmrModel extends Config{
 			System.out.println("Third Anchor is valid");
 		}
 		showQBlueprint(q1,twounit,unit);
-		Question q = new Question(0, 6, image, twounit);
-		q.optOverview();
-		boolean[] a = q.viewfilled();
-		//System.out.print("b = "+Arrays.toString(a));
+		
 		/***
 		 * END BLOCK#1
 		 */
@@ -207,6 +206,20 @@ public class OmrModel extends Config{
 		mtlend.empty();
 		unit = 0;
 		twounit = 0;
+	}
+	public void setQuestions(int count){
+		questions = new Questions(6, twounit, image);
+		//Question q = new Question(0, 6, image, twounit);
+		//q.optOverview();
+		//boolean[] a = q.viewfilled();
+		//System.out.print("b = "+Arrays.toString(a));
+		
+		//ArrayList<Question> qs = new ArrayList<Question>(); 
+		//qs.add(q);
+		//boolean[] a = qs.get(q1).viewfilled();
+		//System.out.print("b = "+Arrays.toString(a));
+		//questions = new Questions(count, twounit, image);
+		//questions.addAllQuestions();
 	}
 }
 
