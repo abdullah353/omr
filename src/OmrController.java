@@ -1,11 +1,14 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.Arrays;
 
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import jxl.write.WriteException;
 
 class OmrController {
 	OmrModel sheet;
@@ -55,14 +58,21 @@ class OmrController {
 				if(sheet.checkAnchors()){
 					System.out.println("Anchors Checked");
 					//setting up all questions
-					sheet.setQuestions(6);
+					sheet.setQuestions(20);
 						//sheet.questions.addQuestion(0, 6);
 					sheet.questions.addAllQuestions();
 					int[] a = sheet.questions.getAllOptions();
 					System.out.print("b = "+Arrays.toString(a));
 					sheet.questions.addAllQuestions();
-					//int[] result = sheet.questions.getAllOptions();
-					//System.out.println("Result for 6 is "+result.toString());
+					try {
+						sheet.questions.genExcel("test2", "Sheets");
+					} catch (WriteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}else{
 					System.out.println("Can't Validate Achors");
 					sheet.resetModel();

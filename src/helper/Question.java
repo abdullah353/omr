@@ -67,15 +67,11 @@ public class Question extends Config{
 	}
 	public int getResult(){
 		boolean[] allinfo = viewfilled();
-		int totChk = 0;
-		int index = 0;
 		for (int i = 0; i < allinfo.length; i++) {
 			if(allinfo[i]){
-				totChk++;
-				index=i;
-				break;
+				return i+1;
 			}
 		}
-		return index;
+		return -1;
 	}
 }
