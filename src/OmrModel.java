@@ -1,14 +1,12 @@
 
 import helper.Point;
-import helper.Question;
+import helper.Questions;
 import helper.Rectangle;
 
 import java.awt.Color;
-import java.awt.List;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 import javax.imageio.ImageIO;
 
@@ -27,13 +25,14 @@ public class OmrModel extends Config{
 	public int 	unit,twounit;
 	BufferedImage image;
 	double rot=0.0,uerr;
-	
+	public Questions questions;
 	/*
 	 * Constructors
 	 */
 	public OmrModel(){
 		mtlst = new Point();
 		mtlend = new Point();
+		
 		unit = 0;
 		twounit = 0;
 	}
@@ -189,10 +188,7 @@ public class OmrModel extends Config{
 			System.out.println("Third Anchor is valid");
 		}
 		showQBlueprint(q1,twounit,unit);
-		Question q = new Question(0, 6, image, twounit);
-		q.optOverview();
-		boolean[] a = q.viewfilled();
-		//System.out.print("b = "+Arrays.toString(a));
+		
 		/***
 		 * END BLOCK#1
 		 */
@@ -208,43 +204,12 @@ public class OmrModel extends Config{
 		unit = 0;
 		twounit = 0;
 	}
-}
-
-//verify Height and break
-/*if(!mtlst.isempty() && !mtlend.isempty()){
-	exp2U = mtlst.gety();
-	System.out.println("Checking Width twou is"+exp2U);
-	System.out.println("mtlst is"+mtlst.gety()+" 2twou is "+2*exp2U);
-	int hi = 0;
-	for (int yi = mtlst.gety(); yi < 2*exp2U; yi++) {
-		int c = image1.getRGB( mtlst.getx(),yi);
-		Color color = new Color(c);
-		if (color.getRed() <= 89.25 && color.getBlue() <= 89.25 && color.getGreen() <= 89.25) {
-			hi++;
+	public boolean setQuestions(int count){
+		if(count<=20){
+			questions = new Questions(count, twounit, image);
+			return true;
 		}
+		System.out.println("Can not Add More Than 20 Questions");
+		return false;
 	}
-	if( exp2U - experr <= hi && hi <= exp2U + experr ){
-		mtlend.sety(2*exp2U);
-		twounit = exp2U;
-		unit = twounit/2;
-	}
-	System.out.println("Hi is "+hi);
 }
-*/
-/*
-System.out.println(image1.getHeight());
-
-System.out.println("GOT OUT");
-int d = image1.getRGB(299,59);
-Color colord = new Color(d);
-System.out.println("Actual end Color"+colord.getRed() + colord.getBlue() +colord.getGreen() );
-System.out.println(mtlst.getp());
-System.out.println(mtlend.getp());
-System.out.println("Next Expected Mark (->x,^y)="+2*twouy+","+8*twouy+"End px="+ (10*twouy)+"py="+(15*twouy));
-int q = image1.getRGB(2*twouy,8*twouy);
-Color colorq = new Color(q);
-int w = image1.getRGB(10*twouy-1,15*twouy-1);
-Color colorw = new Color(w);
-System.out.println("Colo Expected Mark (->x,^y)="+colorq.getRed() + colorq.getBlue() +colorq.getGreen()+"End px="+colorw.getRed() + colorw.getBlue() +colorw.getGreen());
-System.out.println("Next Expected Mark (->x,^y)="+29*twouy+","+56*twouy+"End px="+ (37*twouy)+"py="+(57*twouy));
-*/
