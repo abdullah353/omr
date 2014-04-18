@@ -1,12 +1,14 @@
 import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 
-import java.io.File; 
-import jxl.*; 
-import jxl.write.*; 
+import jxl.Workbook;
+import jxl.write.Label;
 import jxl.write.Number;
-import jxl.write.biff.RowsExceededException;
+import jxl.write.WritableSheet;
+import jxl.write.WritableWorkbook;
+import jxl.write.WriteException;
 
 
 public class Omr {
@@ -18,24 +20,13 @@ public class Omr {
 		OmrView view=new OmrView(sheet);
 		OmrController control=new OmrController(sheet, view);
 		//control.startApp();
-		WritableWorkbook workbook = Workbook.createWorkbook(new File("output.xls"));
-		WritableSheet sheets = workbook.createSheet("First Sheet", 0);
-		Label label = new Label(0, 2, "A label record"); 
-		Label label2 = new Label(0, 0, "A label record"); 
-		Number number = new Number(3, 4, 3.1459); 
 		try {
-			sheets.addCell(label);
-			sheets.addCell(label2);
-			sheets.addCell(number);
-			workbook.write(); 
-			workbook.close();
-		} catch (RowsExceededException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			genExcel();
 		} catch (WriteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 
+		}
+		
 		
 		/*
 		File file1 = new File("/home/sam/OMRlayout.png");
@@ -85,4 +76,22 @@ public class Omr {
 	    return image;
 
 	}
+	public static void genExcel() throws IOException, WriteException{
+		String 	excelname = "output.xls",
+				sheetName = "Sheet1";
+		int totQuest = 6;
+		int[] selecOpt = {1,2,3,4,5,6};
+		
+		WritableWorkbook workbook = Workbook.createWorkbook(new File( excelname));
+		WritableSheet sheets = workbook.createSheet(sheetName, 0);
+		for (int i = 0; i < totQuest; i++) {
+			Label label = new Label(i, 0, "Question "+i); 
+			Number number = new Number(i, 1, selecOpt[i]); 
+			sheets.addCell(label);
+			sheets.addCell(number);
+		}
+		workbook.write(); 
+		workbook.close();
+	}
+	
 }
