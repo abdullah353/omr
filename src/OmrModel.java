@@ -218,6 +218,7 @@ public class OmrModel extends Config{
 	public boolean setQuestions(int count){
 		if(count<=20){
 			questions = new Questions(count, unit, image);
+			questions.getQuestion(0).setOverview(unit);
 			return true;
 		}
 		System.out.println("Can not Add More Than 20 Questions");

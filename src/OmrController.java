@@ -64,6 +64,7 @@ class OmrController {
 					int[] a = sheet.questions.getAllOptions();
 					System.out.print("b = "+Arrays.toString(a));
 					sheet.questions.addAllQuestions();
+					
 					try {
 						sheet.questions.genExcel("test2", "Sheets");
 					} catch (WriteException e1) {
