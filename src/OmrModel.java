@@ -22,7 +22,8 @@ public class OmrModel extends Config{
 	String filename,path;
 	Rectangle mtl,mcl,mrr,qr;
 	Point mtlst,mtlend;
-	public int 	unit,twounit;
+	Point orig;
+	public int 	unit;
 	BufferedImage image;
 	double rot=0.0,uerr;
 	public Questions questions;
@@ -34,7 +35,6 @@ public class OmrModel extends Config{
 		mtlend = new Point();
 		
 		unit = 0;
-		twounit = 0;
 	}
 	
 	/*
@@ -82,7 +82,7 @@ public class OmrModel extends Config{
 		boolean flag;
 		System.out.println("Looking for Unit");
 		//Do not look For Complete Height
-		for (int y = 10; y < image.getHeight(); y++) {
+		for (int y = 1; y < image.getHeight(); y++) {
 			flag= false;
 			for (int x = 0; x < image.getWidth(); x++) {
 				if (isblackp(x,y)){
@@ -98,7 +98,7 @@ public class OmrModel extends Config{
 					if(flag && !mtlst.isempty() && !mtlend.isempty()){
 						System.out.println("found flag true with non empty points");
 						if(foundMarker()) {
-							break;
+							return true;
 						}
 					}
 				
@@ -106,7 +106,7 @@ public class OmrModel extends Config{
 				}
 			}
 		}
-		return (twounit == 0)? false: true;
+		return (unit == 0)? false: true;
 	}
 	
 	/***
@@ -117,7 +117,6 @@ public class OmrModel extends Config{
 	 */
 	public boolean isblackp(int x,int y){
 		Color color = new Color(image.getRGB( x,y));
-		double thresh= 89.25;
 		return (color.getRed() <= thresh && color.getBlue() <= thresh 
 				&& color.getGreen() <= thresh)?true :false;
 	}
@@ -139,42 +138,55 @@ public class OmrModel extends Config{
 		/***
 		 * END BLOCK#3
 		 */
-		for (int yi = exp2U; yi < 2*exp2U; yi++)
-			if (isblackp(mtlst.getx(),yi))	hi++;
-		//Error Correction Not Optimized at the moment
-		if( exp2U - experr <= hi && hi <= exp2U + experr ){
-			mtlend.sety(2*exp2U);
-			setUnit(exp2U);
-			return true;
+		//for (int yi = exp2U; yi < 2*exp2U; yi++)
+		//	if (isblackp(mtlst.getx(),yi))	hi++;
+		int yi = exp2U;
+		int err = 0;
+		while(err <= 3){
+			if(!isblackp(mtlst.getx(),yi)){
+				err++;	
+			}
+			hi++;
+			yi++;
 		}
+		
+		//Error Correction Not Optimized at the moment
+		//if( exp2U - experr <= hi && hi <= exp2U + experr ){
+		System.out.println("Setting end y position as "+(yi-err+1));
+			mtlend.sety(yi-err+1);
+			System.out.println("Setting Unit as "+(hi-err)+" orig as "+mtlst.getp());
+			setUnitOrig((hi-err),mtlst.getx(),mtlst.gety());
+			//return true;
+		//}
 		/***
 		 * BLOCK#5
 		 */
-		System.out.println("Can't verifyMarker twounit = "+exp2U);
+		System.out.println("Arbitray start"+mtlst.getp()+" mtlend "+mtlend.getp() );
 		/***
 		 * END BLOCK#5
 		 */
-		return false;
+		return true;
 	}
 	
 	/*
 	 * Setter For unit
 	 */
-	public void setUnit(int expu){
-		twounit = expu;
-		unit = twounit/2;
+	public void setUnitOrig(int expu,int origx,int origy){
+		orig = new Point(origx,origy);
+		unit = expu;
 	}
 	/***
 	 * Detecting Anchors on page
 	 * @return boolean
 	 */
 	public boolean checkAnchors(){
-		mtl.setCorn(new Point(layout[firstmark][x0]*twounit,layout[firstmark][y0]*twounit),
-					new Point(layout[firstmark][x1]*twounit,layout[firstmark][y1]*twounit));
-		mcl.setCorn(new Point(layout[secondmark][x0]*twounit,layout[secondmark][y0]*twounit),
-					new Point(layout[secondmark][x1]*twounit,layout[secondmark][y1]*twounit));
-		mrr.setCorn(new Point(layout[thirdmark][x0]*twounit,layout[thirdmark][y0]*twounit),
-					new Point(layout[thirdmark][x1]*twounit,layout[thirdmark][y1]*twounit));
+		setlayout(unit, orig.getx(), orig.gety());
+		mtl.setCorn(new Point(layout[firstmark][x0],layout[firstmark][y0]),
+					new Point(layout[firstmark][x1],layout[firstmark][y1]));
+		mcl.setCorn(new Point(layout[secondmark][x0],layout[secondmark][y0]),
+					new Point(layout[secondmark][x1],layout[secondmark][y1]));
+		mrr.setCorn(new Point(layout[thirdmark][x0],layout[thirdmark][y0]),
+					new Point(layout[thirdmark][x1],layout[thirdmark][y1]));
 		/***
 		 * BLOCK#1: DELETE THIS BLOCK ITS FOR CONSOLE
 		 */
@@ -187,7 +199,7 @@ public class OmrModel extends Config{
 		if(mrr.isBlack()){
 			System.out.println("Third Anchor is valid");
 		}
-		showQBlueprint(q1,twounit,unit);
+		//showQBlueprint(q1,unit,unit);
 		
 		/***
 		 * END BLOCK#1
@@ -201,12 +213,11 @@ public class OmrModel extends Config{
 	public void resetModel(){
 		mtlst.empty();
 		mtlend.empty();
-		unit = 0;
-		twounit = 0;
+		unit = 0;;
 	}
 	public boolean setQuestions(int count){
 		if(count<=20){
-			questions = new Questions(count, twounit, image);
+			questions = new Questions(count, unit, image);
 			return true;
 		}
 		System.out.println("Can not Add More Than 20 Questions");

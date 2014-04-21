@@ -54,7 +54,7 @@ class OmrController {
 			System.out.println("Start Scanning");
 			sheet.init();
 			if(sheet.searchUnit()){
-				System.out.println("Unit Found TwoUnit="+sheet.twounit+" unit="+sheet.unit);
+				System.out.println("Unit Found Unit="+sheet.unit);
 				if(sheet.checkAnchors()){
 					System.out.println("Anchors Checked");
 					//setting up all questions

@@ -13,7 +13,7 @@ public class Question extends Config{
 	/*
 	 * Constructor
 	 */
-	public Question(int number,int options,BufferedImage image,int twounit){
+	public Question(int number,int options,BufferedImage image,int unit){
 		nu 	= number;
 		totOpt	= options;
 		optA = new Rectangle(image);
@@ -22,7 +22,7 @@ public class Question extends Config{
 		optD = new Rectangle(image);
 		optE = new Rectangle(image);
 		optF = new Rectangle(image);
-		setOpt(twounit,twounit/2);
+		setOpt(unit);
 		//setOverview(twounit,twounit/2);
 	}
 	/*
@@ -49,21 +49,21 @@ public class Question extends Config{
 		return filled;
 	}
 	
-	public void setOpt(int twounit,int unit){
-		optA.setCorn(ans[nu][A][x0]*twounit+unit, ans[nu][A][y0]*twounit, ans[nu][A][x1]*twounit, ans[nu][A][y1]*twounit-unit);
-		optB.setCorn(ans[nu][B][x0]*twounit+unit, ans[nu][B][y0]*twounit, ans[nu][B][x1]*twounit, ans[nu][B][y1]*twounit-unit);
-		optC.setCorn(ans[nu][C][x0]*twounit+unit, ans[nu][C][y0]*twounit, ans[nu][C][x1]*twounit, ans[nu][C][y1]*twounit-unit);
-		optD.setCorn(ans[nu][D][x0]*twounit+unit, ans[nu][D][y0]*twounit, ans[nu][D][x1]*twounit, ans[nu][D][y1]*twounit-unit);
-		optE.setCorn(ans[nu][E][x0]*twounit+unit, ans[nu][E][y0]*twounit, ans[nu][E][x1]*twounit, ans[nu][E][y1]*twounit-unit);
-		optF.setCorn(ans[nu][F][x0]*twounit+unit, ans[nu][F][y0]*twounit, ans[nu][F][x1]*twounit, ans[nu][F][y1]*twounit-unit);
+	public void setOpt(int unit){
+		optA.setCorn((ans[nu][A][x0]+1/2)*unit, ans[nu][A][y0]*unit, ans[nu][A][x1]*unit, (ans[nu][A][y1]*-1/2)*unit);
+		optB.setCorn((ans[nu][B][x0]+1/2)*unit, ans[nu][B][y0]*unit, ans[nu][B][x1]*unit, (ans[nu][B][y1]*-1/2)*unit);
+		optC.setCorn((ans[nu][C][x0]+1/2)*unit, ans[nu][C][y0]*unit, ans[nu][C][x1]*unit, (ans[nu][C][y1]*-1/2)*unit);
+		optD.setCorn((ans[nu][D][x0]+1/2)*unit, ans[nu][D][y0]*unit, ans[nu][D][x1]*unit, (ans[nu][D][y1]*-1/2)*unit);
+		optE.setCorn((ans[nu][E][x0]+1/2)*unit, ans[nu][E][y0]*unit, ans[nu][E][x1]*unit, (ans[nu][E][y1]*-1/2)*unit);
+		optF.setCorn((ans[nu][F][x0]+1/2)*unit, ans[nu][F][y0]*unit, ans[nu][F][x1]*unit, (ans[nu][F][y1]*-1/2)*unit);
 	}
-	public void setOverview(int twounit,int unit){
-		System.out.println((ans[nu][A][x0]*twounit+unit)+","+(ans[nu][A][y0]*twounit)+","+(ans[nu][A][x1]*twounit)+","+(ans[nu][A][y1]*twounit-unit));
-		System.out.println((ans[nu][B][x0]*twounit+unit)+","+(ans[nu][B][y0]*twounit)+","+(ans[nu][B][x1]*twounit)+","+(ans[nu][B][y1]*twounit-unit));
-		System.out.println((ans[nu][C][x0]*twounit+unit)+","+(ans[nu][C][y0]*twounit)+","+(ans[nu][C][x1]*twounit)+","+(ans[nu][C][y1]*twounit-unit));
-		System.out.println((ans[nu][D][x0]*twounit+unit)+","+(ans[nu][D][y0]*twounit)+","+(ans[nu][D][x1]*twounit)+","+(ans[nu][D][y1]*twounit-unit));
-		System.out.println((ans[nu][E][x0]*twounit+unit)+","+(ans[nu][E][y0]*twounit)+","+(ans[nu][E][x1]*twounit)+","+(ans[nu][E][y1]*twounit-unit));
-		System.out.println((ans[nu][F][x0]*twounit+unit)+","+(ans[nu][F][y0]*twounit)+","+(ans[nu][F][x1]*twounit)+","+(ans[nu][F][y1]*twounit-unit));
+	public void setOverview(int unit){
+		System.out.println((ans[nu][A][x0]+1/2)*unit+" , "+ ans[nu][A][y0]*unit+" , "+ ans[nu][A][x1]*unit+" , "+ (ans[nu][A][y1]*-1/2)*unit);
+		System.out.println((ans[nu][B][x0]+1/2)*unit+" , "+ ans[nu][B][y0]*unit+" , "+ ans[nu][B][x1]*unit+" , "+ (ans[nu][B][y1]*-1/2)*unit);
+		System.out.println((ans[nu][C][x0]+1/2)*unit+" , "+ ans[nu][C][y0]*unit+" , "+ ans[nu][C][x1]*unit+" , "+ (ans[nu][C][y1]*-1/2)*unit);
+		System.out.println((ans[nu][D][x0]+1/2)*unit+" , "+ ans[nu][D][y0]*unit+" , "+ ans[nu][D][x1]*unit+" , "+ (ans[nu][D][y1]*-1/2)*unit);
+		System.out.println((ans[nu][E][x0]+1/2)*unit+" , "+ ans[nu][E][y0]*unit+" , "+ ans[nu][E][x1]*unit+" , "+ (ans[nu][E][y1]*-1/2)*unit);
+		System.out.println((ans[nu][F][x0]+1/2)*unit+" , "+ ans[nu][F][y0]*unit+" , "+ ans[nu][F][x1]*unit+" , "+ (ans[nu][F][y1]*-1/2)*unit);
 	}
 	public int getResult(){
 		boolean[] allinfo = viewfilled();

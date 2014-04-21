@@ -15,15 +15,15 @@ import config.Config;
 
 public class Questions extends Config{
 	public ArrayList<Question> questions;
-	public int total,twounit;
+	public int total,unit;
 	BufferedImage image;
 	
 	/*
 	 * Constructors
 	 */
-	public Questions(int total,int twounit,BufferedImage image){
+	public Questions(int total,int unit,BufferedImage image){
 		this.total=total;
-		this.twounit=twounit;
+		this.unit=unit;
 		this.image=image;
 		questions = new ArrayList<Question>(); 
 	}
@@ -31,12 +31,12 @@ public class Questions extends Config{
 	 * Methods
 	 */
 	public void addQuestion(int number,int options){
-		Question q = new Question(number, options, image, twounit);
+		Question q = new Question(number, options, image, unit);
 		questions.add(q);
 	}
 	public void addAllQuestions(){
 		for (int i = 0; i < total; i++) {
-			questions.add(new Question(i, 6, image, twounit));
+			questions.add(new Question(i, 6, image, unit));
 		}
 	}
 	public Question getQuestion(int q){
