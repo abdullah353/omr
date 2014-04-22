@@ -17,26 +17,27 @@ public class Questions extends Config{
 	public ArrayList<Question> questions;
 	public int total,unit;
 	BufferedImage image;
-	
+	Point orig;
 	/*
 	 * Constructors
 	 */
-	public Questions(int total,int unit,BufferedImage image){
+	public Questions(int total,int unit,BufferedImage image,Point orig){
 		this.total=total;
 		this.unit=unit;
 		this.image=image;
+		this.orig = orig;
 		questions = new ArrayList<Question>(); 
 	}
 	/*
 	 * Methods
 	 */
 	public void addQuestion(int number,int options){
-		Question q = new Question(number, options, image, unit);
+		Question q = new Question(number, options, image, unit,orig);
 		questions.add(q);
 	}
 	public void addAllQuestions(){
 		for (int i = 0; i < total; i++) {
-			questions.add(new Question(i, 6, image, unit));
+			questions.add(new Question(i, 6, image, unit,orig));
 		}
 	}
 	public Question getQuestion(int q){

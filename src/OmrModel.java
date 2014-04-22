@@ -79,11 +79,10 @@ public class OmrModel extends Config{
 	 * @return boolean
 	 */
 	public boolean searchUnit(){
-		boolean flag;
+		boolean flag=false;
 		System.out.println("Looking for Unit");
 		//Do not look For Complete Height
 		for (int y = 1; y < image.getHeight(); y++) {
-			flag= false;
 			for (int x = 0; x < image.getWidth(); x++) {
 				if (isblackp(x,y)){
 					if(mtlst.isempty()){
@@ -102,7 +101,9 @@ public class OmrModel extends Config{
 						}
 					}
 				
-					
+					flag=false;
+					mtlst.empty();
+					mtlend.empty();
 				}
 			}
 		}
@@ -117,8 +118,8 @@ public class OmrModel extends Config{
 	 */
 	public boolean isblackp(int x,int y){
 		Color color = new Color(image.getRGB( x,y));
-		return (color.getRed() <= thresh && color.getBlue() <= thresh 
-				&& color.getGreen() <= thresh)?true :false;
+		return (color.getRed() <= markth && color.getBlue() <= markth 
+				&& color.getGreen() <= markth)?true :false;
 	}
 	/***
 	 * Finding first Marker and set our unit accordingly
@@ -127,14 +128,14 @@ public class OmrModel extends Config{
 	public boolean foundMarker(){
 		//Expected unit
 		int exp2U = 0,
-			experr = 1,
+			fix,
 			hi = 0;
 		exp2U = mtlst.gety();
 		/***
 		 * BLOCK#3 
 		 */
-		System.out.println("Checking Width twou is "+exp2U);
-		System.out.println("mtlst is"+mtlst.gety()+" 2twou is "+2*exp2U);
+		System.out.println("Checking Width expOrig y is "+exp2U);
+//		System.out.println("mtlst is"+mtlst.gety()+" 2twou is "+2*exp2U);
 		/***
 		 * END BLOCK#3
 		 */
@@ -142,10 +143,7 @@ public class OmrModel extends Config{
 		//	if (isblackp(mtlst.getx(),yi))	hi++;
 		int yi = exp2U;
 		int err = 0;
-		while(err <= 3){
-			if(!isblackp(mtlst.getx(),yi)){
-				err++;	
-			}
+		while(isblackp(mtlst.getx(),yi)){
 			hi++;
 			yi++;
 		}
@@ -153,9 +151,9 @@ public class OmrModel extends Config{
 		//Error Correction Not Optimized at the moment
 		//if( exp2U - experr <= hi && hi <= exp2U + experr ){
 		System.out.println("Setting end y position as "+(yi-err+1));
-			mtlend.sety(yi-err+1);
-			System.out.println("Setting Unit as "+(hi-err)+" orig as "+mtlst.getp());
-			setUnitOrig((hi-err),mtlst.getx(),mtlst.gety());
+			if(err!=0){mtlend.sety(yi-err+1);}else{mtlend.sety(yi);}
+			fix = (err!=0)?hi-1:hi-1;
+			setUnitOrig(fix,mtlst.getx(),mtlst.gety());
 			//return true;
 		//}
 		/***
@@ -174,6 +172,9 @@ public class OmrModel extends Config{
 	public void setUnitOrig(int expu,int origx,int origy){
 		orig = new Point(origx,origy);
 		unit = expu;
+		System.out.println("Adjusted Unit as "+unit+" orig as "+orig.getp());
+		
+		
 	}
 	/***
 	 * Detecting Anchors on page
@@ -204,7 +205,7 @@ public class OmrModel extends Config{
 		/***
 		 * END BLOCK#1
 		 */
-		return (mtl.isBlack() && mcl.isBlack() && mrr.isBlack())?true:false;
+		return (mtl.isBlack() && mcl.isBlack() )?true:false;
 	}
 
 	/***
@@ -217,8 +218,8 @@ public class OmrModel extends Config{
 	}
 	public boolean setQuestions(int count){
 		if(count<=20){
-			questions = new Questions(count, unit, image);
-			questions.getQuestion(0).setOverview(unit);
+			questions = new Questions(count, unit, image,orig);
+			
 			return true;
 		}
 		System.out.println("Can not Add More Than 20 Questions");

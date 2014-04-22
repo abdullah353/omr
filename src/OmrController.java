@@ -58,9 +58,10 @@ class OmrController {
 				if(sheet.checkAnchors()){
 					System.out.println("Anchors Checked");
 					//setting up all questions
-					sheet.setQuestions(20);
-						//sheet.questions.addQuestion(0, 6);
+					sheet.setQuestions(15);
+					
 					sheet.questions.addAllQuestions();
+					sheet.questions.getQuestion(0).setOverview(sheet.unit);;
 					int[] a = sheet.questions.getAllOptions();
 					System.out.print("b = "+Arrays.toString(a));
 					sheet.questions.addAllQuestions();
