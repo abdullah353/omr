@@ -68,16 +68,18 @@ class OmrController extends Config{
 			logger.log(Level.INFO, "Initiated Scanning");
 			sheet.init();
 			if(sheet.searchUnit()){
-				System.out.println("Unit Found TwoUnit="+sheet.twounit+" unit="+sheet.unit);
+				System.out.println("Unit Found Unit="+sheet.unit);
 				if(sheet.checkAnchors()){
 					System.out.println("Anchors Checked");
 					//setting up all questions
-					sheet.setQuestions(20);
-					//sheet.questions.addQuestion(0, 6);
+
+					sheet.setQuestions(15);
 					sheet.questions.addAllQuestions();
+					sheet.questions.getQuestion(0).setOverview(sheet.unit);;
 					int[] a = sheet.questions.getAllOptions();
 					System.out.print("b = "+Arrays.toString(a));
 					sheet.questions.addAllQuestions();
+					
 					try {
 						sheet.questions.genExcel("test2", "Sheets");
 					} catch (WriteException e1) {

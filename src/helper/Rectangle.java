@@ -24,7 +24,18 @@ public class Rectangle extends Global{
 			}
 		}
 		System.out.println("tl ="+tl.getp()+","+br.getp()+" White is"+w+" And Black is "+b);
-		return (w >= b)?false:true;
+		return (w*.50 >= b)?false:true;
+	}
+	public boolean isBlack(double fact){
+		int b=0,w=0;
+		for (int y = tl.gety(); y < br.gety(); y++) {
+			for (int x = tl.getx(); x < br.getx(); x++) {
+				if (isblackp(x,y,fact)) b++;
+				else w++;
+			}
+		}
+		System.out.println("tl ="+tl.getp()+","+br.getp()+" White is"+w+" And Black is "+b);
+		return (w*0.35 >= b)?false:true;
 	}
 	/***
 	 * Setting Edges points
@@ -38,5 +49,8 @@ public class Rectangle extends Global{
 	public void setCorn(int x0,int y0,int x1,int y1){
 		System.out.println("Setting points x0= "+x0+",y0="+y0+",x1= "+x1+",y1="+y1);
 		setCorn(new Point(x0, y0), new Point(x1,y1));
+	}
+	public String displayCorners(){
+		return "TopLeft "+tl.getp()+" BottomRight "+br.getp();
 	}
 }

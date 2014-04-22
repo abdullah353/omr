@@ -20,7 +20,12 @@ public class Global extends Config{
 	 */
 	public boolean isblackp(int x,int y){
 		Color color = new Color(image.getRGB( x,y));
-		return (color.getRed() <= thresh && color.getBlue() <= thresh 
-				&& color.getGreen() <= thresh)?true :false;
+		return (color.getRed() <= markth && color.getBlue() <=  markth
+				&& color.getGreen() <= markth)?true :false;
+	}
+	public boolean isblackp(int x,int y,double fact){
+		Color color = new Color(image.getRGB( x,y));
+		return (color.getRed() <= fact && color.getBlue() <=  fact
+				&& color.getGreen() <= fact)?true :false;
 	}
 }
