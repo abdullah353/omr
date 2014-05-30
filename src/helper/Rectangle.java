@@ -53,4 +53,10 @@ public class Rectangle extends Global{
 	public String displayCorners(){
 		return "TopLeft "+tl.getp()+" BottomRight "+br.getp();
 	}
+	public double getheight(){
+		return br.getx() - tl.getx();
+	}
+	public double getwidth(){
+		return br.gety() - tl.gety();
+	}
 }
