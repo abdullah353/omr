@@ -2,8 +2,10 @@
 import helper.Point;
 import helper.Questions;
 import helper.Rectangle;
+import helper.Seq;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +14,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import config.Config;
 
@@ -22,21 +27,24 @@ public class OmrModel extends Config{
 	/*
 	 * Attributes
 	 */
-	private Logger logger = Logger.getLogger(OmrModel.class.getName());
+	private Logger logger;
 	private FileHandler fh;
-	String filename,path;
+	String filename,path,nameonly,sheetid,aid,dkey;
 	Rectangle mtl,mcl,mrr,qr;
 	Point mtlst,mtlend;
 	Point orig;
 	public int 	unit;
-	BufferedImage image;
+	BufferedImage image,debugimage;
 	double rot=0.0,uerr;
 	public Questions questions;
+	private JsonObject qrinfo;
+	private Seq seq;
 	/*
 	 * Constructors
 	 */
 	public OmrModel(){
-		setLog("OmrModel",this.fh,this.logger);
+		logger = Logger.getLogger(OmrModel.class.getName());
+		setLog("OmrModel",fh,logger);
 		logger.log(Level.INFO, "Create Model");
 		mtlst = new Point();
 		mtlend = new Point();
@@ -46,7 +54,83 @@ public class OmrModel extends Config{
 	/*
 	 * Methods
 	 */
-	
+	public void setseq(Seq in){
+		seq = in;
+	}
+	public void setqrinfo(String qrstr){
+		JsonParser parser = new JsonParser();
+		qrinfo = (JsonObject)parser.parse(qrstr);
+		setaid(qrinfo.get("id").getAsString());
+		setdkey(getaid().substring(getaid().length() - 5));
+	}
+	public void setaid(String aid){
+		this.aid = aid;
+	}
+	public void setdkey(String dkey){
+		this.dkey = dkey;
+	}
+	public String getdkey(){
+		return dkey;
+	}
+	public String getaid(){
+		return aid;
+	}
+	public JsonObject getQSeq(){
+		return seq.getqSeq();
+	}
+	public String getQnameat(int i){
+		return seq.getqnameat(i);
+	}
+	public JsonObject getOptSeq(){
+		return seq.getoptSeq();
+	}
+	public JsonObject getOptSeq(String queid){
+		return (JsonObject) seq.getoptSeq().get(queid);
+	}
+	public int getOptCount(String queid){
+		JsonObject ans = (JsonObject) seq.getoptSeq().get(queid);
+		int count =0;
+		if(ans.get("A")!=null) count++;
+		if(ans.get("B")!=null) count++;
+		if(ans.get("C")!=null) count++;
+		if(ans.get("D")!=null) count++;
+		if(ans.get("E")!=null) count++;
+		if(ans.get("F")!=null) count++;
+		return count;
+	}
+	public String getstudent(){
+		return seq.getStudentName();
+	}
+	public int getQuestions(){
+		JsonObject ques = getQSeq();
+		int count =0;
+		for (int i = 0; i <= 40; i++) {
+			if(ques.get(String.valueOf(i)) != null){
+				count++;
+			}else{
+				break;
+			}
+		}
+		return count;
+	}
+	public int[] getoptions(){
+		int opts[] = new int[getQuestions()];
+		String label[] = {"A","B","C","D","E","F"};
+		for (int i = 0; i < opts.length; i++) {
+			int count = 0;
+			for (int j = 0; j < 6; j++) {
+				if(getOptSeq(getQnameat(i)).get(label[j]) != null){
+					count++;
+					opts[i] = count;
+				}else{
+					break;
+				}
+						//System.out.println(getOptSeq(getQnameat(i)));
+			}
+			
+		}
+		return opts;
+	}
 	/***
 	 * Initializing Model
 	 * @return boolean
@@ -64,6 +148,16 @@ public class OmrModel extends Config{
 		try {
 			logger.log(Level.INFO, "Storing Image in Buffer");
 			this.image = ImageIO.read(file1);
+			ImageIO.write(this.image, "jpg", new File("debug/"+nameonly+".jpg"));
+			
+			/*
+			Kernel k = new Kernel(3, 3, new float[] { .0f, .1111f, .1111f, 
+                    .1111f, .1111f, .1111f, 
+                    .1111f, .1111f, .0f });
+			ConvolveOp op = new ConvolveOp(k);
+			BufferedImage blurry = op.filter(ImageIO.read(file1), null);
+			ImageIO.write(blurry, "jpg", new File("debug/AnchorsOverview2.jpg"));
+			*/
 			setShapes();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -90,8 +184,8 @@ public class OmrModel extends Config{
 		boolean flag=false;
 		logger.log(Level.INFO, "Searching for Unit Initiated");
 		//Do not look For Complete Height
-		for (int y = 1; y < image.getHeight(); y++) {
-			for (int x = 0; x < image.getWidth(); x++) {
+		for (int y = 10; y < image.getHeight(); y++) {
+			for (int x = 10; x < image.getWidth(); x++) {
 				if (isblackp(x,y)){
 					if(mtlst.isempty()){
 						flag = true;
@@ -137,6 +231,7 @@ public class OmrModel extends Config{
 	 */
 	public boolean foundMarker(){
 		logger.log(Level.INFO ,"Checking Whether We Found Marker");
+		logger.log(Level.INFO,"Step 1 Checking Expected Width");
 		int exp2U = 0,
 			fix,
 			hi = 0;
@@ -166,7 +261,7 @@ public class OmrModel extends Config{
 		logger.log(Level.INFO ,"Setting end y position as "+(yi-err+1));
 		if(err!=0){mtlend.sety(yi-err+1);}else{mtlend.sety(yi);}
 		fix = (err!=0)?hi-1:hi-1;
-		setUnitOrig(fix,mtlst.getx(),mtlst.gety());
+		setUnitOrig(fix+1,mtlst.getx(),mtlst.gety());
 		logger.log(Level.INFO ,"Arbitray start"+mtlst.getp()+" mtlend "+mtlend.getp() );
 		return true;
 	}
@@ -178,8 +273,7 @@ public class OmrModel extends Config{
 		orig = new Point(origx,origy);
 		unit = expu;
 		System.out.println("Adjusted Unit as "+unit+" orig as "+orig.getp());
-		
-		
+
 	}
 	/***
 	 * Detecting Anchors on page
@@ -196,6 +290,7 @@ public class OmrModel extends Config{
 		/***
 		 * BLOCK#1: DELETE THIS BLOCK ITS FOR CONSOLE
 		 */
+		
 		if(mtl.isBlack()){
 			System.out.println("First Anchor is valid");
 		}
@@ -205,6 +300,7 @@ public class OmrModel extends Config{
 		if(mrr.isBlack()){
 			System.out.println("Third Anchor is valid");
 		}
+		
 		//showQBlueprint(q1,unit,unit);
 		
 		/***
@@ -212,7 +308,23 @@ public class OmrModel extends Config{
 		 */
 		return (mtl.isBlack() && mcl.isBlack() )?true:false;
 	}
+	public void fillimage(int x,int y,int w,int h){
+		File file1 = new File("debug/"+nameonly+".jpg");
+		try {
+			BufferedImage ebugimage = ImageIO.read(file1);
+			Graphics graph = ebugimage.createGraphics();
+			graph.setColor(Color.red);
+			graph.fillRect(x, y, h, w);
+			graph.dispose();
+			ImageIO.write(ebugimage, "jpg", new File("debug/"+nameonly+".jpg"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	public void savefilled(){
 
+	}
 	/***
 	 * Reseting Model
 	 */
@@ -229,5 +341,18 @@ public class OmrModel extends Config{
 		}
 		System.out.println("Can not Add More Than 20 Questions");
 		return false;
+	}
+
+	public void setpaths(String name, String directory) {
+		filename = name;
+		path = directory;
+		nameonly = filename.substring(0,filename.lastIndexOf("."));
+		logger.log(Level.INFO, "Selected Image "+path+DR+filename);
+	}
+	public void drawanchors(){
+		fillimage((int) mtl.tl.getx(),(int) mtl.tl.gety(),(int) mtl.getwidth(),(int) mtl.getheight());
+		fillimage((int) mcl.tl.getx(),(int) mcl.tl.gety(),(int) mcl.getwidth(),(int) mcl.getheight());
+		fillimage((int) mrr.tl.getx(),(int) mrr.tl.gety(),(int) mrr.getwidth(),(int) mrr.getheight());
+		savefilled();
 	}
 }

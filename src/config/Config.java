@@ -7,13 +7,12 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 public class Config {
-	public 	String DR,ext;
+	public 	String DR,ext,excelname;
 	public double markth= 200,quth=240;
 	public boolean 	Debug = true,
 					extra = true,
-					appendlog = false;
+					appendlog = true;
 	public int[][] layout;
-	//public int[][][] ans;
 	public int firstmark,
 		secondmark,
 		thirdmark,
@@ -66,6 +65,7 @@ public class Config {
 	public Config(){
 		DR="/";
 		ext=".xls";
+		excelname = "results";
 		x0 = firstmark	=0;
 		y0 = secondmark	=1;
 		x1 = thirdmark	=2;
@@ -74,7 +74,7 @@ public class Config {
 	}
 	public void setLog(String filename,FileHandler fh,Logger logger){
 		try {
-			fh=new FileHandler("log/"+filename+".log",appendlog);
+			fh=new FileHandler("log/log.txt",appendlog);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -96,11 +96,16 @@ public class Config {
 		layout[secondmark][y0] = 13*unit+origy;
 		layout[secondmark][x1] = 8*unit+origx;
 		layout[secondmark][y1] = 14*unit+origy;
-		
+		/*
 		layout[thirdmark][x0] = 27*unit+origx;
 		layout[thirdmark][y0] = 55*unit+origy;
 		layout[thirdmark][x1] = 35*unit+origx;
 		layout[thirdmark][y1] = 56*unit+origy;
+		*/
+		layout[thirdmark][x0] = 0*unit+origx;
+		layout[thirdmark][y0] = 13*unit+origy;
+		layout[thirdmark][x1] = 8*unit+origx;
+		layout[thirdmark][y1] = 14*unit+origy;
 	}
 	public void setAns(){
 		A=q1=0;

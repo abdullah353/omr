@@ -1,7 +1,12 @@
 package helper;
 
 import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 import config.Config;
 
@@ -10,16 +15,26 @@ public class Question extends Config{
 	 * Attributes
 	 */
 	int nu,totOpt;
+	File file;
 	Rectangle optA,optB,optC,optD,optE,optF;
 	Point orig;
-	BufferedImage image;
+	String imgname;
+	BufferedImage image,tmpimg;
 	/*
 	 * Constructor
 	 */
-	public Question(int number,int options,BufferedImage image,int unit,Point orig){
+	public Question(int number,int options,BufferedImage image,String imgname,int unit,Point orig){
 		nu 	= number;
+		this.imgname = imgname;
 		totOpt	= options;
 		this.image = image;
+		try {
+			file = new File("debug/"+imgname+".jpg");
+			tmpimg = ImageIO.read(file);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		optA = new Rectangle(image);
 		optB = new Rectangle(image);
 		optC = new Rectangle(image);
@@ -49,9 +64,24 @@ public class Question extends Config{
 		return false;
 	}
 	public boolean[] viewfilled(){
-		boolean[] filled = {optA.isBlack(quth),optB.isBlack(quth),optC.isBlack(quth),
-							optD.isBlack(quth),optE.isBlack(quth),optF.isBlack(quth)};
-		return filled;
+		switch(totOpt){
+		case 1:
+			return new boolean[] {optA.isBlack(quth)};
+		case 2:
+			return new boolean[] {optA.isBlack(quth),optB.isBlack(quth)};
+		case 3:
+			return new boolean[] {optA.isBlack(quth),optB.isBlack(quth),optC.isBlack(quth)};
+		case 4:
+			return new boolean[] {optA.isBlack(quth),optB.isBlack(quth),optC.isBlack(quth),
+					optD.isBlack(quth)};
+		case 5:
+			return new boolean[] {optA.isBlack(quth),optB.isBlack(quth),optC.isBlack(quth),
+					optD.isBlack(quth),optE.isBlack(quth)};
+		default:
+			return new boolean[] {optA.isBlack(quth),optB.isBlack(quth),optC.isBlack(quth),
+					optD.isBlack(quth),optE.isBlack(quth),optF.isBlack(quth)};
+		}
+
 	}
 	
 	public void setOpt(int unit){
@@ -61,27 +91,54 @@ public class Question extends Config{
 		optD.setCorn((int)( (double)(ans[nu][D][x0]+0.5)*unit+orig.getx()+1), (ans[nu][D][y0]*unit+orig.gety()),(ans[nu][D][x1]*unit+orig.getx()), (int) ((double) (ans[nu][D][y1]-0.5)*unit+orig.gety()));
 		optE.setCorn((int)( (double)(ans[nu][E][x0]+0.5)*unit+orig.getx()+1), (ans[nu][E][y0]*unit+orig.gety()),(ans[nu][E][x1]*unit+orig.getx()), (int) ((double) (ans[nu][E][y1]-0.5)*unit+orig.gety()));
 		optF.setCorn((int)( (double)(ans[nu][F][x0]+0.5)*unit+orig.getx()+2), (ans[nu][F][y0]*unit+orig.gety()),(ans[nu][F][x1]*unit+orig.getx()), (int) ((double) (ans[nu][F][y1]-0.5)*unit+orig.gety()));
+		drawmaps();
 	}
-	public void setOverview(int unit){
+	public void setOverview(int unit) throws IOException{
 		System.out.println("optA "+optA.displayCorners());
 		System.out.println("optB "+optB.displayCorners());
 		System.out.println("optC "+optC.displayCorners());
 		System.out.println("optD "+optD.displayCorners());
 		System.out.println("optE "+optE.displayCorners());
 		System.out.println("optF "+optF.displayCorners());
+		
 	}
-	public int getResult(){
+	public String getResult(){
 		boolean[] allinfo = viewfilled();
 		for (int i = 0; i < allinfo.length; i++) {
 			if(allinfo[i]){
-				return i+1;
+				return ((i+1) == 1)? "A":((i+1) == 2)? "B":((i+1) == 3)? "C":((i+1) == 4)? "D":((i+1) == 5)? "E":((i+1) == 6)?"F":"skip";
 			}
 		}
-		return -1;
+		return "skip";
 	}
 	public boolean isblackp(int x,int y){
 		Color color = new Color(image.getRGB( x,y));
 		return (color.getRed() <= 245 && color.getBlue() <= 245
 				&& color.getGreen() <= 245)?true :false;
+	}
+	public void drawmaps(){
+		
+		fillimage((int) optA.tl.getx(),(int) optA.tl.gety(),(int) optA.getwidth(),(int) optA.getheight());
+		fillimage((int) optB.tl.getx(),(int) optB.tl.gety(),(int) optB.getwidth(),(int) optB.getheight());
+		fillimage((int) optC.tl.getx(),(int) optC.tl.gety(),(int) optC.getwidth(),(int) optC.getheight());
+		fillimage((int) optD.tl.getx(),(int) optD.tl.gety(),(int) optD.getwidth(),(int) optD.getheight());
+		fillimage((int) optE.tl.getx(),(int) optE.tl.gety(),(int) optE.getwidth(),(int) optE.getheight());
+		fillimage((int) optF.tl.getx(),(int) optF.tl.gety(),(int) optF.getwidth(),(int) optF.getheight());
+		savefilled();
+	}
+	public void fillimage(int x,int y,int w,int h){
+		Graphics graph = tmpimg.createGraphics();
+		graph.setColor(Color.red);
+		graph.fillRect(x, y, w, h);
+		graph.dispose();
+		
+	}
+	public void savefilled(){
+		try {
+			ImageIO.write(tmpimg, "jpg", file = new File("debug/"+imgname+".jpg"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
