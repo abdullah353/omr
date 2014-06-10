@@ -203,44 +203,6 @@ public class OmrModel extends Config{
 	}
 	
 	/***
-	 * Searching and Setting Unit
-	 * @return boolean
-	 */
-	public boolean searchUnit(){
-		boolean flag=false;
-		logger.log(Level.INFO, "Searching for Unit Initiated");
-		//Do not look For Complete Height
-		for (int y = 10; y < image.getHeight(); y++) {
-			for (int x = 10; x < image.getWidth(); x++) {
-				if (isblackp(x,y)){
-					if(mtlst.isempty()){
-						flag = true;
-						System.out.println("First black at"+x+","+y);
-						mtlst.setP(x, y);
-					}else {
-						System.out.println("Next black at"+x+","+y);
-						mtlend.setP(x, y);
-					}
-				}else{
-					if(flag && !mtlst.isempty() && !mtlend.isempty()){
-						logger.log(Level.INFO, "found flag true with non empty points");
-						if(foundMarker()) {
-							logger.log(Level.INFO, "Found Unit From Marker ");
-							return false;
-						}
-					}
-				
-					flag=false;
-					mtlst.empty();
-					mtlend.empty();
-				}
-			}
-		}
-		logger.log(Level.SEVERE, "Can't Found any Unit");
-		return false;
-	}
-	
-	/***
 	 * Detecting if pixel is black
 	 * @param x integer
 	 * @param y integer
@@ -308,7 +270,7 @@ public class OmrModel extends Config{
 		cvCvtColor(imgx, imgxd1, CV_BGR2GRAY);
 		cvSmooth( imgxd1, imgxd1,CV_GAUSSIAN,9,9,2,2);
 		units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
-		ShowImage(imgxc1, "WorkingImage", 512);
+		//ShowImage(imgxc1, "WorkingImage", 512);
 		for (int i = 0; i < units.size(); i++) {
 			sum += units.get(i);
 		}
@@ -331,7 +293,7 @@ public class OmrModel extends Config{
         
         //ShowImage(imgxd1, "imgxd1",512);
         units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
-		ShowImage(imgxc1, "WorkingImage", 512);
+		//ShowImage(imgxc1, "WorkingImage", 512);
 		for (int i = 0; i < units.size(); i++) {
 			sum += units.get(i);
 		}
@@ -389,9 +351,7 @@ public class OmrModel extends Config{
 			e.printStackTrace();
 		}
 	}
-	public void savefilled(){
 
-	}
 	/***
 	 * Reseting Model
 	 */
@@ -539,7 +499,9 @@ public class OmrModel extends Config{
 		CvMemStorage storage =CvMemStorage.create(); //storage area for all contours
 		
 		//cvFindContours(BWImage, storage, contours, Loader.sizeof(CvContour.class), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+		cvSmooth( imgxd1, imgxd1,CV_GAUSSIAN,9,9,2,2);
 		cvCanny(imgxd1,imgxd1,0,300);
+		cvSmooth( imgxd1, imgxd1,CV_GAUSSIAN,9,9,2,2);
 		//cvCanny(arg0, arg1, arg2, arg3, arg4)
 		//cvSobel(BWImage, BWImage, 1, 1);
 		
@@ -549,7 +511,7 @@ public class OmrModel extends Config{
 		int maxradii = (int) (imgxd1.height()*.015);
 		int avg = minradii+maxradii/2;
 		int cendist = (130 <= dpi && dpi <= 160)? 50:100,
-			canth 	= (130 <= dpi && dpi <= 160)? 90:90,
+			canth 	= (130 <= dpi && dpi <= 160)? 100:100,
 			centh 	= (130 <= dpi && dpi <= 160)? 37:37,
 			minr 	= (130 <= dpi && dpi <= 160)? 13:23,
 			maxr 	= (130 <= dpi && dpi <= 160)? 28:56;
