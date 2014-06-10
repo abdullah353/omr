@@ -1,4 +1,26 @@
 
+import static org.bytedeco.javacpp.opencv_core.CV_AA;
+import static org.bytedeco.javacpp.opencv_core.IPL_DEPTH_8U;
+import static org.bytedeco.javacpp.opencv_core.cvCircle;
+import static org.bytedeco.javacpp.opencv_core.cvCreateImage;
+import static org.bytedeco.javacpp.opencv_core.cvGetSeqElem;
+import static org.bytedeco.javacpp.opencv_core.cvGetSize;
+import static org.bytedeco.javacpp.opencv_core.cvPoint;
+import static org.bytedeco.javacpp.opencv_core.cvPointFrom32f;
+import static org.bytedeco.javacpp.opencv_core.cvRectangle;
+import static org.bytedeco.javacpp.opencv_core.cvScalar;
+import static org.bytedeco.javacpp.opencv_core.cvSize;
+import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
+import static org.bytedeco.javacpp.opencv_highgui.cvSaveImage;
+import static org.bytedeco.javacpp.opencv_imgproc.CV_BGR2GRAY;
+import static org.bytedeco.javacpp.opencv_imgproc.CV_GAUSSIAN;
+import static org.bytedeco.javacpp.opencv_imgproc.CV_HOUGH_GRADIENT;
+import static org.bytedeco.javacpp.opencv_imgproc.CV_THRESH_BINARY;
+import static org.bytedeco.javacpp.opencv_imgproc.cvCanny;
+import static org.bytedeco.javacpp.opencv_imgproc.cvCvtColor;
+import static org.bytedeco.javacpp.opencv_imgproc.cvHoughCircles;
+import static org.bytedeco.javacpp.opencv_imgproc.cvSmooth;
+import static org.bytedeco.javacpp.opencv_imgproc.cvThreshold;
 import helper.Point;
 import helper.Questions;
 import helper.Rectangle;
@@ -9,12 +31,26 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
 
+import org.bytedeco.javacpp.opencv_core.CvMat;
+import org.bytedeco.javacpp.opencv_core.CvMemStorage;
+import org.bytedeco.javacpp.opencv_core.CvPoint;
+import org.bytedeco.javacpp.opencv_core.CvPoint2D32f;
+import org.bytedeco.javacpp.opencv_core.CvPoint3D32f;
+import org.bytedeco.javacpp.opencv_core.CvScalar;
+import org.bytedeco.javacpp.opencv_core.CvSeq;
+import org.bytedeco.javacpp.opencv_core.IplImage;
+import org.bytedeco.javacv.Blobs;
+import org.bytedeco.javacv.CanvasFrame;
+
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -31,10 +67,13 @@ public class OmrModel extends Config{
 	private FileHandler fh;
 	String filename,path,nameonly,sheetid,aid,dkey;
 	Rectangle mtl,mcl,mrr,qr;
+	private CvPoint corner;
 	Point mtlst,mtlend;
 	Point orig;
+	private int unitx,dpi;
 	public int 	unit;
 	BufferedImage image,debugimage;
+	private IplImage imgx;
 	double rot=0.0,uerr;
 	public Questions questions;
 	private JsonObject qrinfo;
@@ -49,6 +88,7 @@ public class OmrModel extends Config{
 		mtlst = new Point();
 		mtlend = new Point();
 		unit = 0;
+		corner = cvPoint(0, 0);
 	}
 	
 	/*
@@ -136,33 +176,19 @@ public class OmrModel extends Config{
 	 * @return boolean
 	 */
 	protected boolean init(){
-		/***
-		 * BLOCK#2
-		 */
-		System.out.println("Checking Markers!");
-		System.out.println("file location "+path+DR+filename);
-		/***
-		 * END BLOCK#2
-		 */
 		File file1 = new File(path+DR+filename);
 		try {
 			logger.log(Level.INFO, "Storing Image in Buffer");
-			this.image = ImageIO.read(file1);
-			ImageIO.write(this.image, "jpg", new File("debug/"+nameonly+".jpg"));
-			
-			/*
-			Kernel k = new Kernel(3, 3, new float[] { .0f, .1111f, .1111f, 
-                    .1111f, .1111f, .1111f, 
-                    .1111f, .1111f, .0f });
-			ConvolveOp op = new ConvolveOp(k);
-			BufferedImage blurry = op.filter(ImageIO.read(file1), null);
-			ImageIO.write(blurry, "jpg", new File("debug/AnchorsOverview2.jpg"));
-			*/
+			image = ImageIO.read(file1);
+			imgx = cvLoadImage(path+DR+filename);
+			cvSaveImage("debug/"+filename, imgx);
 			setShapes();
+			return true;
 		} catch (IOException e) {
+			logger.log(Level.SEVERE, "Can't Open/Store Image file");
 			e.printStackTrace();
+			return false;
 		}
-        return false;
 	}
 	
 	/***
@@ -200,7 +226,7 @@ public class OmrModel extends Config{
 						logger.log(Level.INFO, "found flag true with non empty points");
 						if(foundMarker()) {
 							logger.log(Level.INFO, "Found Unit From Marker ");
-							return true;
+							return false;
 						}
 					}
 				
@@ -236,21 +262,6 @@ public class OmrModel extends Config{
 			fix,
 			hi = 0;
 		exp2U = mtlst.gety();
-/*<<<<<<< HEAD
-		
-		logger.log(Level.INFO ,"Setting Expected twounit is "+exp2U);
-		for (int yi = exp2U; yi < 2*exp2U; yi++)
-			if (isblackp(mtlst.getx(),yi))	hi++;
-		//Error Correction Not Optimized at the moment
-		if( exp2U - experr <= hi && hi <= exp2U + experr ){
-			mtlend.sety(2*exp2U);
-			setUnit(exp2U);
-			return true;
-		}
-		logger.log(Level.WARNING ,"Expected Marker is wrong");
-		return false;
-=======
-*/
 		logger.log(Level.INFO ,"Checking Width expOrig y is "+exp2U);
 		int yi = exp2U;
 		int err = 0;
@@ -276,6 +287,62 @@ public class OmrModel extends Config{
 
 	}
 	/***
+	 * Looking for reference rectangles
+	 * 
+	 */
+	public boolean lookref(){
+		List<Integer> units = new ArrayList<Integer>();
+		double 	parea = imgx.height()*imgx.width(),
+				s = imgx.height()/11.69;
+    	
+		int 	MinArea = (130 <= s && s <= 160)? 4000:20000,
+				MaxArea = (130 <= s && s <= 160)? 7000:30000,
+				sum = 0,
+				avg = 0;
+		dpi = (int) s;
+		unitx =(130 <= dpi && dpi <= 160)? 28:58;
+		System.out.println("dpi is "+s+" Min "+MinArea+" Max "+MaxArea);
+		IplImage 	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
+		imgxc1 = imgx.clone();
+		cvCvtColor(imgx, imgxd1, CV_BGR2GRAY);
+		cvSmooth( imgxd1, imgxd1,CV_GAUSSIAN,9,9,2,2);
+		units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
+		ShowImage(imgxc1, "WorkingImage", 512);
+		for (int i = 0; i < units.size(); i++) {
+			sum += units.get(i);
+		}
+		avg = sum/units.size();
+		estimatecorner(avg,MinArea,MaxArea);
+		cvSaveImage("debug/"+filename+"FIRST-imgxc1.jpg", imgxc1);
+		return true;
+	}
+	private void estimatecorner(int avg,int MinArea,int MaxArea) {
+		List<Integer> units = new ArrayList<Integer>();
+		int sum =0,avg2=0;
+		IplImage 	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
+		imgxc1 = imgx.clone(); 
+        cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
+        cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
+        cvCanny(imgxd1,imgxd1,0,300);
+        cvThreshold(imgxd1,imgxd1, 127, 255, CV_THRESH_BINARY);
+        //cvSaveImage(filename+"imgxc1canny.jpg", imgxd1);
+        
+        //ShowImage(imgxd1, "imgxd1",512);
+        units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
+		ShowImage(imgxc1, "WorkingImage", 512);
+		for (int i = 0; i < units.size(); i++) {
+			sum += units.get(i);
+		}
+		avg2 = sum/units.size();
+        
+        //ShowImage(imgxc1, "imgsssss1",512);
+        cvSaveImage("debug/"+filename+"SECOND-imgxc1.jpg", imgxc1);
+		setUnitOrig(unitx,corner.x(),corner.y());
+	}
+
+	/***
 	 * Detecting Anchors on page
 	 * @return boolean
 	 */
@@ -298,7 +365,7 @@ public class OmrModel extends Config{
 			System.out.println("Second Anchor is valid");
 		}
 		if(mrr.isBlack()){
-			System.out.println("Third Anchor is valid");
+			System.out.println("Third Anchor is cvalid");
 		}
 		
 		//showQBlueprint(q1,unit,unit);
@@ -334,13 +401,14 @@ public class OmrModel extends Config{
 		unit = 0;;
 	}
 	public boolean setQuestions(int count){
-		if(count<=20){
+		if(count<=40){
+			logger.log(Level.SEVERE,"Actual Quesitions in Quiz are"+count);
 			questions = new Questions(count, unit, image,orig);
-			
 			return true;
 		}
-		System.out.println("Can not Add More Than 20 Questions");
-		return false;
+		logger.log(Level.SEVERE,"Total Questions found from Server exceeded the limit of 40");
+		questions = new Questions(count, unit, image,orig);
+		return true;
 	}
 
 	public void setpaths(String name, String directory) {
@@ -349,10 +417,164 @@ public class OmrModel extends Config{
 		nameonly = filename.substring(0,filename.lastIndexOf("."));
 		logger.log(Level.INFO, "Selected Image "+path+DR+filename);
 	}
-	public void drawanchors(){
-		fillimage((int) mtl.tl.getx(),(int) mtl.tl.gety(),(int) mtl.getwidth(),(int) mtl.getheight());
-		fillimage((int) mcl.tl.getx(),(int) mcl.tl.gety(),(int) mcl.getwidth(),(int) mcl.getheight());
-		fillimage((int) mrr.tl.getx(),(int) mrr.tl.gety(),(int) mrr.getwidth(),(int) mrr.getheight());
-		savefilled();
+
+	/***
+	 * Draw rectangle on image
+	 * @param image
+	 * @param xMin
+	 * @param yMin
+	 * @param xMax
+	 * @param yMax
+	 * @param Thick
+	 */
+    public static void Highlight(IplImage image, int xMin, int yMin, int xMax, int yMax, int Thick){
+        CvPoint pt1 = cvPoint(xMin,yMin);
+        CvPoint pt2 = cvPoint(xMax,yMax);
+        CvScalar color = cvScalar(255,0,0,0);       // blue [green] [red]
+        cvRectangle(image, pt1, pt2, color, Thick, 4, 0);
+    }
+    /***
+     * Overloaded Show Image
+     * @param image
+     * @param caption
+     * @param size
+     */
+    public static void ShowImage(IplImage image, String caption, int size){
+        if(size < 128) size = 128;
+        CvMat mat = image.asCvMat();
+        int width = mat.cols(); if(width < 1) width = 1;
+        int height = mat.rows(); if(height < 1) height = 1;
+        double aspect = 1.0 * width / height;
+        if(height != size) { height = size; width = (int) ( height * aspect ); }
+        if(width != size) width = size;
+        height = (int) ( width / aspect );
+        ShowImage(image, caption, width, height);
+    }
+    /***
+     * Show Image
+     * @param image
+     * @param caption
+     * @param width
+     * @param height
+     */
+    public static void ShowImage(IplImage image, String caption, int width, int height)
+    {
+        CanvasFrame canvas = new CanvasFrame(caption, 1);   // gamma=1
+        canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+        canvas.setCanvasSize(width, height);
+        canvas.showImage(image);
+    }
+    /***
+     * Detecting references for specified region of page
+     * @param imgxc1
+     * @param MinArea
+     * @param loc
+     * @return
+     */
+    public List<Integer> regionchck(IplImage imgxd1,IplImage imgxc1,int MinArea,int MaxArea,String loc){
+    	List<Integer> units = new ArrayList<Integer>();
+    	Blobs 	Regions = new Blobs();
+    	int stx = 0, sty = 0,
+    		enx = 0, eny = 0;
+    	if(loc.equals("topleft")){
+    		stx = 0; sty = 0;
+    		enx = imgxd1.width(); eny = imgxd1.height()/4;
+    	}else if(loc.equals("topright")){
+    		stx = 800; sty = 800;
+    		enx =  imgxd1.width(); eny = imgxd1.height();    		
+    	}
+    	Regions.BlobAnalysis(
+				imgxd1,		// image
+                stx, sty,   // ROI start col, row
+                enx,eny,	// ROI cols, rows                 
+                1,          // border (0 = black; 1 = white)
+                MinArea);   // minarea
+		for(int i = 1; i <= Blobs.MaxLabel; i++)
+        {
+            double [] Region = Blobs.RegionData[i];
+            if(!(Region[Blobs.BLOBAREA] > MaxArea)){
+            int Parent = (int) Region[Blobs.BLOBPARENT];
+            int Color = (int) Region[Blobs.BLOBCOLOR];
+            int MinX = (int) Region[Blobs.BLOBMINX];
+            int MaxX = (int) Region[Blobs.BLOBMAXX];
+            int MinY = (int) Region[Blobs.BLOBMINY];
+            int MaxY = (int) Region[Blobs.BLOBMAXY];
+            if(i==1){
+            	corner.x(MinX);
+            	corner.y(MinY);
+            }
+            units.add(MaxY-MinY);
+            System.out.println("Expected unit is "+(MaxY-MinY)+"Color is"+Color+" Parent "+Region[Blobs.BLOBSUMXX]);
+            //System.out.println(MinX+","+MinY+"  "+MaxX+","+MaxY+" AREA + "+bArea+ " percentage"+perc*100+"diagl "+distance(p1, p2));
+            Highlight(imgxc1,  MinX, MinY, MaxX, MaxY, 2);
+            }else{
+            	System.out.println("TOO LARGE AREA"+Region[Blobs.BLOBAREA]);
+            }
+        }
+		return units;
+    }
+
+	public void circle() {
+		int MinArea = 6;
+		int ErodeCount =0;
+		int DilateCount = 0;
+		ErodeCount =2;
+		DilateCount = 1;
+		MinArea = 250;
+		IplImage	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
+		imgxc1 = imgx.clone(); 
+		imgxd1 = cvCreateImage(cvGetSize(imgxc1), IPL_DEPTH_8U, 1);
+
+		cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
+		//ShowImage(GrayImage, "CvtColor");
+		cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
+		//ShowImage(GrayImage, "Smoothing");
+		//ShowImage(GrayImage, "GrayImage", 512);
+		//IplImage BWImage = cvCreateImage(cvGetSize(GrayImage), IPL_DEPTH_8U, 1); 
+		cvThreshold(imgxd1, imgxd1, 200, 255, CV_THRESH_BINARY);
+		//ShowImage(BWImage, "ThreshHolding");
+		CvSeq contours = new CvSeq();;  //hold the pointer to a contour in the memory block
+		CvSeq result = new CvSeq();;   //hold sequence of points of a contour
+		CvMemStorage storage =CvMemStorage.create(); //storage area for all contours
+		
+		//cvFindContours(BWImage, storage, contours, Loader.sizeof(CvContour.class), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
+		cvCanny(imgxd1,imgxd1,0,300);
+		//cvCanny(arg0, arg1, arg2, arg3, arg4)
+		//cvSobel(BWImage, BWImage, 1, 1);
+		
+		//ShowImage(BWImage, "Canny");
+		//System.out.println(BWImage.height()*.05);
+		int minradii = (int) (imgxd1.height()*.0085);
+		int maxradii = (int) (imgxd1.height()*.015);
+		int avg = minradii+maxradii/2;
+		int cendist = (130 <= dpi && dpi <= 160)? 50:100,
+			canth 	= (130 <= dpi && dpi <= 160)? 90:90,
+			centh 	= (130 <= dpi && dpi <= 160)? 37:37,
+			minr 	= (130 <= dpi && dpi <= 160)? 13:23,
+			maxr 	= (130 <= dpi && dpi <= 160)? 28:56;
+		//System.out.println(minradii+","+maxradii);
+		CvSeq circles = cvHoughCircles(
+				imgxd1, //Input image
+				storage, //Memory Storage
+				CV_HOUGH_GRADIENT, //Detection method
+				1, //Inverse ratio 1
+				cendist, //Minimum distance between the centers of the detected circles avg
+				canth, //Higher threshold for canny edge detector 90
+				centh, //Threshold at the center detection stage 39
+				minr, //min radius 25
+				maxr//max radius 100
+				);
+		for(int i = 0; i < circles.total(); i++){
+			CvPoint3D32f circle = new CvPoint3D32f(cvGetSeqElem(circles, i));
+			
+			CvPoint center = cvPointFrom32f(new CvPoint2D32f(circle));
+			int radius = Math.round(circle.z());
+			System.out.println(center.x()+","+center.y());
+			if(radius<=80)
+				cvCircle(imgxc1, center, radius, CvScalar.GREEN, 3, CV_AA, 0);
+		}
+		ShowImage(imgxc1, "Canny",512);
 	}
+	
 }

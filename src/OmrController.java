@@ -61,13 +61,14 @@ class OmrController extends Config{
 	class OpenL implements ActionListener{
 		public void actionPerformed(ActionEvent e){
 			JFileChooser c = new JFileChooser();
-			FileFilter ft = new FileNameExtensionFilter("Image Files", "png");
-			c.setFileFilter(ft);
+			c.setFileFilter(new FileNameExtensionFilter("Image Files", "png"));
+			logger.log(Level.INFO,"Resetting sheet states");
 			sheet.resetModel();
 			int rVal = c.showOpenDialog(new JPanel());
 			if (rVal == JFileChooser.APPROVE_OPTION) {
 				directory = c.getCurrentDirectory();
 				filesInDirectory = c.getCurrentDirectory().listFiles();
+				view.filename.setText(directory.toString());
 				view.subView(view.scanPanel());
 			}
 			if (rVal == JFileChooser.CANCEL_OPTION) {
@@ -80,63 +81,67 @@ class OmrController extends Config{
 	
 	class Scan implements ActionListener{
 		public void actionPerformed(ActionEvent e){
-			logger.log(Level.INFO, "Initiated Scanning");
+			logger.log(Level.INFO, "Scanning process started");
 			List<String[]> supplierNames1 = new ArrayList<String[]>();
 			
 			for ( File file : filesInDirectory ) {
-			    System.out.println(file.getName());
+				logger.log(Level.INFO,"Selected file "+file.getName());
 			    sheet.setpaths(file.getName(), directory.toString());
-				view.filename.setText(sheet.filename);
+			    view.filename.setText("Scaning "+file.getName());
 				view.dir.setText(sheet.path);
-				sheet.init();
-				if(sheet.searchUnit()){
-					System.out.println("Unit Found Unit="+sheet.unit);
-					if(sheet.checkAnchors()){
-						System.out.println("Anchors Checked");
-						//setting up all questions
-						initDocs();
-						sheet.drawanchors();
-						try {
-							initQuestions(sheet.getQuestions(),sheet.getoptions());
-						} catch (IOException e2) {
-							// TODO Auto-generated catch block
-							e2.printStackTrace();
+				if(sheet.init()){
+					if(sheet.lookref()){
+						System.out.println("Unit Found Unit="+sheet.unit);
+						if(sheet.checkAnchors() || !sheet.checkAnchors()){
+							System.out.println("Anchors Checked");
+							//setting up all questions
+							//initDocs();
+							//sheet.drawanchors();
+							//initQuestions(sheet.getQuestions(),sheet.getoptions());
+							sheet.circle();
+							/*initQuestions(40,new int[] {6,6,6,6,6,6,6,6,6,6
+												,6,6,6,6,6,6,6,6,6,6
+												,6,6,6,6,6,6,6,6,6,6
+												,6,6,6,6,6,6,6,6,6,6});
+							
+							/*
+							String[] results = sheet.questions.getAllOptions();
+							supplierNames1.add(results);
+							System.out.print("grade = "+Arrays.toString(results));
+							sheet.questions.addAllQuestions(sheet.getoptions(),sheet.filename.substring(0,sheet.filename.lastIndexOf(".")));
+							genrslt(docs,sheet.getstudent(),"OMR", results);
+							view.filename.setText("Ready To Submit");
+							docs.push();
+							*/
+						}else{
+							System.out.println("Can't Validate Achors");
+							sheet.resetModel();
 						}
-						String[] results = sheet.questions.getAllOptions();
-						supplierNames1.add(results);
-						System.out.print("grade = "+Arrays.toString(results));
-						sheet.questions.addAllQuestions(sheet.getoptions(),sheet.filename.substring(0,sheet.filename.lastIndexOf(".")));
-						genrslt(docs,sheet.getstudent(),"OMR", results);
-						view.filename.setText("Ready To Submit");
-						docs.push();
 						
 					}else{
-						System.out.println("Can't Validate Achors");
 						sheet.resetModel();
+						System.out.println("Can't Found Unit");
 					}
-					
 				}else{
-					sheet.resetModel();
-					System.out.println("Can't Found Unit");
+					logger.log(Level.SEVERE,"Initializing Sheet Failed");
 				}
 				//System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAA"+Arrays.toString(supplierNames1));
 			}//for files
 		}//actionPerformed
 	}//ActionListener
 	public void initDocs(){
-		docs = new GetDocs(sheet.path+DR+sheet.filename);
-		sheet.setqrinfo(docs.getqrstr());
-		sheet.setseq(docs.getMap());
-		logger.log(Level.INFO,"Student Name "+sheet.getstudent());
-		logger.log(Level.INFO,"Questions Details "+sheet.getQSeq().toString());
-		logger.log(Level.INFO,"Total Questions "+sheet.getQuestions());
-		logger.log(Level.INFO,"Options Details "+sheet.getOptSeq());
+		//docs = new GetDocs(sheet.path+DR+sheet.filename);
+		//sheet.setqrinfo(docs.getqrstr());
+		//sheet.setseq(docs.getMap());
+		//logger.log(Level.INFO,"Student Name "+sheet.getstudent());
+		//logger.log(Level.INFO,"Questions Details "+sheet.getQSeq().toString());
+		//logger.log(Level.INFO,"Total Questions "+sheet.getQuestions());
+		//logger.log(Level.INFO,"Options Details "+sheet.getOptSeq());
 		
 	}
-	public void initQuestions(int total,int[] options ) throws IOException{
+	public void initQuestions(int total,int[] options ) {
 		sheet.setQuestions(total);
-		sheet.questions.addAllQuestions(options,sheet.filename.substring(0,sheet.filename.lastIndexOf(".")));
-		
+		sheet.questions.addAllQuestions(options,sheet.filename);
 		//sheet.questions.getQuestion(0).setOverview(sheet.unit);
 	}
 	public void genrslt(GetDocs docs,String name,String enu, String[] results){

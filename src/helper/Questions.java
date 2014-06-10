@@ -7,9 +7,6 @@ import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
-
-import com.google.gson.JsonArray;
-
 import config.Config;
 
 public class Questions extends Config{
@@ -44,7 +41,6 @@ public class Questions extends Config{
 	}
 	public String[] getAllOptions(){
 		int listsize = questions.size();
-		System.out.println("ASASASASSA"+listsize);
 		String[] ret = new String[listsize];
 		for(int i=0; i<listsize; i++){
 			ret[i]=questions.get(i).getResult();

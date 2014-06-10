@@ -1,5 +1,11 @@
 package helper;
 
+import static org.bytedeco.javacpp.opencv_core.cvPoint;
+import static org.bytedeco.javacpp.opencv_core.cvRectangle;
+import static org.bytedeco.javacpp.opencv_core.cvScalar;
+import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
+import static org.bytedeco.javacpp.opencv_highgui.cvSaveImage;
+
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
@@ -7,6 +13,12 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+
+import org.bytedeco.javacpp.opencv_core.CvMat;
+import org.bytedeco.javacpp.opencv_core.CvPoint;
+import org.bytedeco.javacpp.opencv_core.CvScalar;
+import org.bytedeco.javacpp.opencv_core.IplImage;
+import org.bytedeco.javacv.CanvasFrame;
 
 import config.Config;
 
@@ -20,6 +32,7 @@ public class Question extends Config{
 	Point orig;
 	String imgname;
 	BufferedImage image,tmpimg;
+	private IplImage tmpimgx;
 	/*
 	 * Constructor
 	 */
@@ -28,13 +41,6 @@ public class Question extends Config{
 		this.imgname = imgname;
 		totOpt	= options;
 		this.image = image;
-		try {
-			file = new File("debug/"+imgname+".jpg");
-			tmpimg = ImageIO.read(file);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		optA = new Rectangle(image);
 		optB = new Rectangle(image);
 		optC = new Rectangle(image);
@@ -117,7 +123,25 @@ public class Question extends Config{
 				&& color.getGreen() <= 245)?true :false;
 	}
 	public void drawmaps(){
-		
+		tmpimgx = cvLoadImage("debug/"+imgname);
+		fillimage((int) optA.tl.getx(),(int) optA.tl.gety(),(int) optA.br.getx(),(int) optA.br.gety());
+		fillimage((int) optB.tl.getx(),(int) optB.tl.gety(),(int) optB.br.getx(),(int) optB.br.gety());
+		fillimage((int) optC.tl.getx(),(int) optC.tl.gety(),(int) optC.br.getx(),(int) optC.br.gety());
+		fillimage((int) optD.tl.getx(),(int) optD.tl.gety(),(int) optD.br.getx(),(int) optD.br.gety());
+		fillimage((int) optE.tl.getx(),(int) optE.tl.gety(),(int) optE.br.getx(),(int) optE.br.gety());
+		fillimage((int) optF.tl.getx(),(int) optF.tl.gety(),(int) optF.br.getx(),(int) optF.br.gety());
+		savefilled();
+	}
+/*
+	public void drawmaps(){
+		try {
+			System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"+imgname);
+			file = new File("debug/"+imgname);
+			tmpimg = ImageIO.read(file);
+		} catch (IOException e) {
+			System.out.println("Cant read Image debug/"+imgname);
+			e.printStackTrace();
+		}
 		fillimage((int) optA.tl.getx(),(int) optA.tl.gety(),(int) optA.getwidth(),(int) optA.getheight());
 		fillimage((int) optB.tl.getx(),(int) optB.tl.gety(),(int) optB.getwidth(),(int) optB.getheight());
 		fillimage((int) optC.tl.getx(),(int) optC.tl.gety(),(int) optC.getwidth(),(int) optC.getheight());
@@ -126,13 +150,19 @@ public class Question extends Config{
 		fillimage((int) optF.tl.getx(),(int) optF.tl.gety(),(int) optF.getwidth(),(int) optF.getheight());
 		savefilled();
 	}
-	public void fillimage(int x,int y,int w,int h){
-		Graphics graph = tmpimg.createGraphics();
+*/
+	public void fillimage(int xMin,int yMin,int w,int h){
+		/*Graphics graph = tmpimg.createGraphics();
 		graph.setColor(Color.red);
 		graph.fillRect(x, y, w, h);
 		graph.dispose();
-		
+		*/
+		Highlight(tmpimgx,xMin,yMin, w,  h, 4);
 	}
+	public void savefilled(){
+		cvSaveImage("debug/"+imgname,tmpimgx);
+	}
+	/*
 	public void savefilled(){
 		try {
 			ImageIO.write(tmpimg, "jpg", file = new File("debug/"+imgname+".jpg"));
@@ -141,4 +171,51 @@ public class Question extends Config{
 			e.printStackTrace();
 		}
 	}
+	*/
+	/***
+	 * Draw rectangle on image
+	 * @param image
+	 * @param xMin
+	 * @param yMin
+	 * @param xMax
+	 * @param yMax
+	 * @param Thick
+	 */
+    public static void Highlight(IplImage image, int xMin, int yMin, int xMax, int yMax, int Thick){
+        CvPoint pt1 = cvPoint(xMin,yMin);
+        CvPoint pt2 = cvPoint(xMax,yMax);
+        CvScalar color = cvScalar(255,0,0,0);       // blue [green] [red]
+        cvRectangle(image, pt1, pt2, color, Thick, 4, 0);
+    }
+    /***
+     * Overloaded Show Image
+     * @param image
+     * @param caption
+     * @param size
+     */
+    public static void ShowImage(IplImage image, String caption, int size){
+        if(size < 128) size = 128;
+        CvMat mat = image.asCvMat();
+        int width = mat.cols(); if(width < 1) width = 1;
+        int height = mat.rows(); if(height < 1) height = 1;
+        double aspect = 1.0 * width / height;
+        if(height != size) { height = size; width = (int) ( height * aspect ); }
+        if(width != size) width = size;
+        height = (int) ( width / aspect );
+        ShowImage(image, caption, width, height);
+    }
+    /***
+     * Show Image
+     * @param image
+     * @param caption
+     * @param width
+     * @param height
+     */
+    public static void ShowImage(IplImage image, String caption, int width, int height)
+    {
+        CanvasFrame canvas = new CanvasFrame(caption, 1);   // gamma=1
+        canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+        canvas.setCanvasSize(width, height);
+        canvas.showImage(image);
+    }
 }
