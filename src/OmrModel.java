@@ -9,7 +9,6 @@ import static org.bytedeco.javacpp.opencv_core.cvPoint;
 import static org.bytedeco.javacpp.opencv_core.cvPointFrom32f;
 import static org.bytedeco.javacpp.opencv_core.cvRectangle;
 import static org.bytedeco.javacpp.opencv_core.cvScalar;
-import static org.bytedeco.javacpp.opencv_core.cvSize;
 import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
 import static org.bytedeco.javacpp.opencv_highgui.cvSaveImage;
 import static org.bytedeco.javacpp.opencv_imgproc.CV_BGR2GRAY;
@@ -21,6 +20,7 @@ import static org.bytedeco.javacpp.opencv_imgproc.cvCvtColor;
 import static org.bytedeco.javacpp.opencv_imgproc.cvHoughCircles;
 import static org.bytedeco.javacpp.opencv_imgproc.cvSmooth;
 import static org.bytedeco.javacpp.opencv_imgproc.cvThreshold;
+import helper.Options;
 import helper.Point;
 import helper.Questions;
 import helper.Rectangle;
@@ -32,7 +32,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,7 +53,6 @@ import org.bytedeco.javacpp.opencv_core.IplImage;
 import org.bytedeco.javacv.Blobs;
 import org.bytedeco.javacv.CanvasFrame;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -301,7 +303,7 @@ public class OmrModel extends Config{
         
         //ShowImage(imgxc1, "imgsssss1",512);
         cvSaveImage("debug/"+filename+"SECOND-imgxc1.jpg", imgxc1);
-		setUnitOrig(unitx,corner.x(),corner.y());
+		setUnitOrig(avg2,corner.x(),corner.y());
 	}
 
 	/***
@@ -481,6 +483,8 @@ public class OmrModel extends Config{
 		ErodeCount =2;
 		DilateCount = 1;
 		MinArea = 250;
+		
+
 		IplImage	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
 					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
 		imgxc1 = imgx.clone(); 
@@ -527,16 +531,56 @@ public class OmrModel extends Config{
 				minr, //min radius 25
 				maxr//max radius 100
 				);
+		int[] arx = new int[circles.total()];
+		int[] ary = new int[circles.total()];
+		List<JsonObject> points = new ArrayList<JsonObject>();
+
 		for(int i = 0; i < circles.total(); i++){
 			CvPoint3D32f circle = new CvPoint3D32f(cvGetSeqElem(circles, i));
 			
 			CvPoint center = cvPointFrom32f(new CvPoint2D32f(circle));
 			int radius = Math.round(circle.z());
-			System.out.println(center.x()+","+center.y());
+			//REMOVE THIS TRICK PLEASE
+			if(i<30){
+				arx[i] = center.x();
+				ary[i] = center.y();
+				JsonObject point = new JsonObject();
+				point.addProperty("x", center.x());
+				point.addProperty("y", center.y());
+				point.addProperty("r", radius);
+				point.addProperty("s", 0);
+				points.add(point);
+			}
 			if(radius<=80)
 				cvCircle(imgxc1, center, radius, CvScalar.GREEN, 3, CV_AA, 0);
 		}
-		ShowImage(imgxc1, "Canny",512);
+		Options options = new Options(points, arx, ary);
+		options.organise();
+		//options.indexit(12, 28,5);
+		/*
+		System.out.println(Arrays.toString(ary));
+		Arrays.sort(ary);
+		System.out.println(Arrays.toString(ary));
+		System.out.println(points.toString());
+		List<JsonObject> ysort = sortby(points,removeDuplicates(ary),"y");
+		addindex(ysort);*/
+		//ShowImage(imgxc1, "Canny",512);
 	}
 	
+	
+	public String join(String[] ar,String sep){
+		String ret = "";
+		for (int i = 0; i < ar.length; i++) {
+			ret += ar[i];
+		}
+		return ret;
+	}
+	public List<JsonObject> strnglist(String[] ar){
+		List<JsonObject> json2 = new ArrayList<JsonObject>();
+		for (int i = 0; i < ar.length; i++) {
+			
+		}
+		return json2;
+	}
+
 }

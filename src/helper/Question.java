@@ -91,12 +91,12 @@ public class Question extends Config{
 	}
 	
 	public void setOpt(int unit){
-		optA.setCorn((int)( (double)(ans[nu][A][x0]+0.5)*unit+orig.getx()), (ans[nu][A][y0]*unit+orig.gety()),(ans[nu][A][x1]*unit+orig.getx()), (int) ((double) (ans[nu][A][y1]-0.5)*unit+orig.gety()));
-		optB.setCorn((int)( (double)(ans[nu][B][x0]+0.5)*unit+orig.getx()), (ans[nu][B][y0]*unit+orig.gety()),(ans[nu][B][x1]*unit+orig.getx()), (int) ((double) (ans[nu][B][y1]-0.5)*unit+orig.gety()));
-		optC.setCorn((int)( (double)(ans[nu][C][x0]+0.5)*unit+orig.getx()), (ans[nu][C][y0]*unit+orig.gety()),(ans[nu][C][x1]*unit+orig.getx()), (int) ((double) (ans[nu][C][y1]-0.5)*unit+orig.gety()));
-		optD.setCorn((int)( (double)(ans[nu][D][x0]+0.5)*unit+orig.getx()+1), (ans[nu][D][y0]*unit+orig.gety()),(ans[nu][D][x1]*unit+orig.getx()), (int) ((double) (ans[nu][D][y1]-0.5)*unit+orig.gety()));
-		optE.setCorn((int)( (double)(ans[nu][E][x0]+0.5)*unit+orig.getx()+1), (ans[nu][E][y0]*unit+orig.gety()),(ans[nu][E][x1]*unit+orig.getx()), (int) ((double) (ans[nu][E][y1]-0.5)*unit+orig.gety()));
-		optF.setCorn((int)( (double)(ans[nu][F][x0]+0.5)*unit+orig.getx()+2), (ans[nu][F][y0]*unit+orig.gety()),(ans[nu][F][x1]*unit+orig.getx()), (int) ((double) (ans[nu][F][y1]-0.5)*unit+orig.gety()));
+		optA.setCorn((int)( (double)(ans[nu][A][x0])*unit+orig.getx()), (ans[nu][A][y0]*unit+orig.gety()),(ans[nu][A][x1]*unit+orig.getx()), (int) ((double) (ans[nu][A][y1])*unit+orig.gety()));
+		optB.setCorn((int)( (double)(ans[nu][B][x0])*unit+orig.getx()), (ans[nu][B][y0]*unit+orig.gety()),(ans[nu][B][x1]*unit+orig.getx()), (int) ((double) (ans[nu][B][y1])*unit+orig.gety()));
+		optC.setCorn((int)( (double)(ans[nu][C][x0])*unit+orig.getx()), (ans[nu][C][y0]*unit+orig.gety()),(ans[nu][C][x1]*unit+orig.getx()), (int) ((double) (ans[nu][C][y1])*unit+orig.gety()));
+		optD.setCorn((int)( (double)(ans[nu][D][x0])*unit+orig.getx()), (ans[nu][D][y0]*unit+orig.gety()),(ans[nu][D][x1]*unit+orig.getx()), (int) ((double) (ans[nu][D][y1])*unit+orig.gety()));
+		optE.setCorn((int)( (double)(ans[nu][E][x0])*unit+orig.getx()), (ans[nu][E][y0]*unit+orig.gety()),(ans[nu][E][x1]*unit+orig.getx()), (int) ((double) (ans[nu][E][y1])*unit+orig.gety()));
+		optF.setCorn((int)( (double)(ans[nu][F][x0])*unit+orig.getx()), (ans[nu][F][y0]*unit+orig.gety()),(ans[nu][F][x1]*unit+orig.getx()), (int) ((double) (ans[nu][F][y1])*unit+orig.gety()));
 		drawmaps();
 	}
 	public void setOverview(int unit) throws IOException{

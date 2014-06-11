@@ -99,10 +99,12 @@ class OmrController extends Config{
 							//sheet.drawanchors();
 							//initQuestions(sheet.getQuestions(),sheet.getoptions());
 							sheet.circle();
-							/*initQuestions(40,new int[] {6,6,6,6,6,6,6,6,6,6
+							/*
+							initQuestions(40,new int[] {6,6,6,6,6,6,6,6,6,6
 												,6,6,6,6,6,6,6,6,6,6
 												,6,6,6,6,6,6,6,6,6,6
 												,6,6,6,6,6,6,6,6,6,6});
+												*/
 							
 							/*
 							String[] results = sheet.questions.getAllOptions();
