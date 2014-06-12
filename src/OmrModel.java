@@ -541,7 +541,7 @@ public class OmrModel extends Config{
 			CvPoint center = cvPointFrom32f(new CvPoint2D32f(circle));
 			int radius = Math.round(circle.z());
 			//REMOVE THIS TRICK PLEASE
-			if(i<30){
+
 				arx[i] = center.x();
 				ary[i] = center.y();
 				JsonObject point = new JsonObject();
@@ -550,7 +550,7 @@ public class OmrModel extends Config{
 				point.addProperty("r", radius);
 				point.addProperty("s", 0);
 				points.add(point);
-			}
+
 			if(radius<=80)
 				cvCircle(imgxc1, center, radius, CvScalar.GREEN, 3, CV_AA, 0);
 		}
@@ -564,7 +564,7 @@ public class OmrModel extends Config{
 		System.out.println(points.toString());
 		List<JsonObject> ysort = sortby(points,removeDuplicates(ary),"y");
 		addindex(ysort);*/
-		//ShowImage(imgxc1, "Canny",512);
+		ShowImage(imgxc1, "Canny",512);
 	}
 	
 	
