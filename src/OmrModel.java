@@ -32,10 +32,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,6 +50,7 @@ import org.bytedeco.javacpp.opencv_core.IplImage;
 import org.bytedeco.javacv.Blobs;
 import org.bytedeco.javacv.CanvasFrame;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -72,7 +70,8 @@ public class OmrModel extends Config{
 	private CvPoint corner;
 	Point mtlst,mtlend;
 	Point orig;
-	private int unitx,dpi;
+	private int unitx,dpi,avgradi;
+	private Options options;
 	public int 	unit;
 	BufferedImage image,debugimage;
 	private IplImage imgx;
@@ -365,11 +364,11 @@ public class OmrModel extends Config{
 	public boolean setQuestions(int count){
 		if(count<=40){
 			logger.log(Level.SEVERE,"Actual Quesitions in Quiz are"+count);
-			questions = new Questions(count, unit, image,orig);
+			questions = new Questions(count, unit, image,orig,getcols(),getrows(),avgr());
 			return true;
 		}
 		logger.log(Level.SEVERE,"Total Questions found from Server exceeded the limit of 40");
-		questions = new Questions(count, unit, image,orig);
+		//questions = new Questions(count, unit, image,orig);
 		return true;
 	}
 
@@ -519,6 +518,7 @@ public class OmrModel extends Config{
 			centh 	= (130 <= dpi && dpi <= 160)? 37:37,
 			minr 	= (130 <= dpi && dpi <= 160)? 13:23,
 			maxr 	= (130 <= dpi && dpi <= 160)? 28:56;
+		avgradi = (minr+maxr)/2;
 		//System.out.println(minradii+","+maxradii);
 		CvSeq circles = cvHoughCircles(
 				imgxd1, //Input image
@@ -540,8 +540,8 @@ public class OmrModel extends Config{
 			
 			CvPoint center = cvPointFrom32f(new CvPoint2D32f(circle));
 			int radius = Math.round(circle.z());
-			//REMOVE THIS TRICK PLEASE
 
+			if(radius<=80){
 				arx[i] = center.x();
 				ary[i] = center.y();
 				JsonObject point = new JsonObject();
@@ -550,12 +550,12 @@ public class OmrModel extends Config{
 				point.addProperty("r", radius);
 				point.addProperty("s", 0);
 				points.add(point);
-
-			if(radius<=80)
 				cvCircle(imgxc1, center, radius, CvScalar.GREEN, 3, CV_AA, 0);
+			}
 		}
-		Options options = new Options(points, arx, ary);
+		options = new Options(points, arx, ary,65,45,65,45,320,300);
 		options.organise();
+
 		//options.indexit(12, 28,5);
 		/*
 		System.out.println(Arrays.toString(ary));
@@ -564,7 +564,7 @@ public class OmrModel extends Config{
 		System.out.println(points.toString());
 		List<JsonObject> ysort = sortby(points,removeDuplicates(ary),"y");
 		addindex(ysort);*/
-		ShowImage(imgxc1, "Canny",512);
+		//ShowImage(imgxc1, "Canny",512);
 	}
 	
 	
@@ -582,5 +582,13 @@ public class OmrModel extends Config{
 		}
 		return json2;
 	}
-
+	public JsonArray getcols(){
+		return options.getcols();
+	}
+	public JsonArray getrows(){
+		return options.getrows();
+	}
+	public int avgr(){
+		return avgradi;
+	}
 }

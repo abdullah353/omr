@@ -17,6 +17,7 @@ import javax.swing.JPanel;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import com.google.gson.JsonArray;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.MultiFormatReader;
 import com.google.zxing.NotFoundException;
@@ -95,17 +96,18 @@ class OmrController extends Config{
 						if(sheet.checkAnchors() || !sheet.checkAnchors()){
 							System.out.println("Anchors Checked");
 							//setting up all questions
-							//initDocs();
+							initDocs();
 							//sheet.drawanchors();
 							//initQuestions(sheet.getQuestions(),sheet.getoptions());
 							sheet.circle();
-							/*
-							initQuestions(40,new int[] {6,6,6,6,6,6,6,6,6,6
-												,6,6,6,6,6,6,6,6,6,6
-												,6,6,6,6,6,6,6,6,6,6
-												,6,6,6,6,6,6,6,6,6,6});
-												*/
 							
+							initQuestions(40,new int[] 	{6,6,6,6,6,6,6,6,6,6
+														,6,6,6,6,6,6,6,6,6,6
+														,6,6,6,6,6,6,6,6,6,6
+														,6,6,6,6,6,6,6,6,6,6}, sheet.getcols(),sheet.getrows(),sheet.avgr());
+							//System.out.println(grid.get(""+0).toString());
+							String[] results = sheet.questions.getAllOptions();
+							System.out.print("grade = "+Arrays.toString(results));
 							/*
 							String[] results = sheet.questions.getAllOptions();
 							supplierNames1.add(results);
@@ -141,7 +143,7 @@ class OmrController extends Config{
 		//logger.log(Level.INFO,"Options Details "+sheet.getOptSeq());
 		
 	}
-	public void initQuestions(int total,int[] options ) {
+	public void initQuestions(int total,int[] options, JsonArray tcols, JsonArray trows, int avgr ) {
 		sheet.setQuestions(total);
 		sheet.questions.addAllQuestions(options,sheet.filename);
 		//sheet.questions.getQuestion(0).setOverview(sheet.unit);

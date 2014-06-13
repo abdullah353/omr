@@ -20,27 +20,33 @@ import org.bytedeco.javacpp.opencv_core.CvScalar;
 import org.bytedeco.javacpp.opencv_core.IplImage;
 import org.bytedeco.javacv.CanvasFrame;
 
+import com.google.gson.JsonArray;
+
 import config.Config;
 
 public class Question extends Config{
 	/*
 	 * Attributes
 	 */
-	int nu,totOpt;
+	int nu,totOpt,avgr;
 	File file;
 	Rectangle optA,optB,optC,optD,optE,optF;
 	Point orig;
 	String imgname;
+	private JsonArray cells,rows;
 	BufferedImage image,tmpimg;
 	private IplImage tmpimgx;
 	/*
 	 * Constructor
 	 */
-	public Question(int number,int options,BufferedImage image,String imgname,int unit,Point orig){
+	public Question(int number,int options,BufferedImage image,String imgname,int unit,Point orig, JsonArray cells, JsonArray rows, int avgr){
 		nu 	= number;
 		this.imgname = imgname;
 		totOpt	= options;
 		this.image = image;
+		this.cells = cells;
+		this.rows = rows;
+		this.avgr = avgr;
 		optA = new Rectangle(image);
 		optB = new Rectangle(image);
 		optC = new Rectangle(image);
@@ -48,8 +54,25 @@ public class Question extends Config{
 		optE = new Rectangle(image);
 		optF = new Rectangle(image);
 		this.orig = orig;
-		setOpt(unit);
+		//setOpt(unit);
+		setoptloc();
 		//setOverview(twounit,twounit/2);
+	}
+	private void setoptloc() {
+		optA.setCorn(cell(nu,"A","x")-avgr,row(nu,"A","y")-avgr,cell(nu,"A","x")+avgr,row(nu,"A","y")+avgr);
+		optB.setCorn(cell(nu,"B","x")-avgr,row(nu,"B","y")-avgr,cell(nu,"B","x")+avgr,row(nu,"B","y")+avgr);
+		optC.setCorn(cell(nu,"C","x")-avgr,row(nu,"C","y")-avgr,cell(nu,"C","x")+avgr,row(nu,"C","y")+avgr);
+		optD.setCorn(cell(nu,"D","x")-avgr,row(nu,"D","y")-avgr,cell(nu,"D","x")+avgr,row(nu,"D","y")+avgr);
+		optE.setCorn(cell(nu,"E","x")-avgr,row(nu,"E","y")-avgr,cell(nu,"E","x")+avgr,row(nu,"E","y")+avgr);
+		optF.setCorn(cell(nu,"F","x")-avgr,row(nu,"F","y")-avgr,cell(nu,"F","x")+avgr,row(nu,"F","y")+avgr);
+		drawmaps();
+		//optOverview();
+	}
+	public int cell(int nu,String opt,String axis){
+		return cells.get(getind(nu,opt,axis)).getAsInt();
+	}
+	public int row(int nu,String opt,String axis){
+		return rows.get(getind(nu,opt,axis)).getAsInt();
 	}
 	/*
 	 * Methods
@@ -97,7 +120,8 @@ public class Question extends Config{
 		optD.setCorn((int)( (double)(ans[nu][D][x0])*unit+orig.getx()), (ans[nu][D][y0]*unit+orig.gety()),(ans[nu][D][x1]*unit+orig.getx()), (int) ((double) (ans[nu][D][y1])*unit+orig.gety()));
 		optE.setCorn((int)( (double)(ans[nu][E][x0])*unit+orig.getx()), (ans[nu][E][y0]*unit+orig.gety()),(ans[nu][E][x1]*unit+orig.getx()), (int) ((double) (ans[nu][E][y1])*unit+orig.gety()));
 		optF.setCorn((int)( (double)(ans[nu][F][x0])*unit+orig.getx()), (ans[nu][F][y0]*unit+orig.gety()),(ans[nu][F][x1]*unit+orig.getx()), (int) ((double) (ans[nu][F][y1])*unit+orig.gety()));
-		drawmaps();
+		//drawmaps();
+		//
 	}
 	public void setOverview(int unit) throws IOException{
 		System.out.println("optA "+optA.displayCorners());

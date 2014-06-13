@@ -3,6 +3,8 @@ package helper;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import com.google.gson.JsonArray;
+
 import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WriteException;
@@ -12,28 +14,33 @@ import config.Config;
 public class Questions extends Config{
 	public ArrayList<Question> questions;
 	public int total,unit;
+	private JsonArray cells,rows;
 	BufferedImage image;
 	Point orig;
+	private int avgr;
 	/*
 	 * Constructors
 	 */
-	public Questions(int total,int unit,BufferedImage image,Point orig){
+	public Questions(int total,int unit,BufferedImage image,Point orig, JsonArray tcols, JsonArray trows,int avgr){
 		this.total=total;
 		this.unit=unit;
 		this.image=image;
 		this.orig = orig;
+		this.cells = tcols;
+		this.rows = trows;
+		this.avgr = avgr;
 		questions = new ArrayList<Question>(); 
 	}
 	/*
 	 * Methods
 	 */
 	public void addQuestion(int number,int options,String imgname){
-		Question q = new Question(number, options, image,imgname, unit,orig);
+		Question q = new Question(number, options, image,imgname, unit,orig,cells,rows,avgr);
 		questions.add(q);
 	}
 	public void addAllQuestions(int[] options,String imgname){
 		for (int i = 0; i < total; i++) {
-			questions.add(new Question(i, options[i], image, imgname, unit, orig));
+			questions.add(new Question(i, options[i], image, imgname, unit, orig,cells,rows,avgr));
 		}
 	}
 	public Question getQuestion(int q){
