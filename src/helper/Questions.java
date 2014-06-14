@@ -1,7 +1,10 @@
 package helper;
 
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+
+import org.bytedeco.javacpp.opencv_core.CvPoint;
 
 import com.google.gson.JsonArray;
 
@@ -14,6 +17,7 @@ import config.Config;
 public class Questions extends Config{
 	public ArrayList<Question> questions;
 	public int total,unit;
+	private CvPoint topl,botr;
 	private JsonArray cells,rows;
 	BufferedImage image;
 	Point orig;
@@ -21,7 +25,7 @@ public class Questions extends Config{
 	/*
 	 * Constructors
 	 */
-	public Questions(int total,int unit,BufferedImage image,Point orig, JsonArray tcols, JsonArray trows,int avgr){
+	public Questions(int total,int unit,BufferedImage image,Point orig, JsonArray tcols, JsonArray trows,int avgr,CvPoint tl,CvPoint br){
 		this.total=total;
 		this.unit=unit;
 		this.image=image;

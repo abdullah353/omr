@@ -27,15 +27,16 @@ public class Rectangle extends Global{
 		return (w*.50 >= b)?false:true;
 	}
 	public boolean isBlack(double fact){
-		int b=0,w=0;
+		double b=0,w=0;
 		for (int y = tl.gety(); y < br.gety(); y++) {
 			for (int x = tl.getx(); x < br.getx(); x++) {
 				if (isblackp(x,y,fact)) b++;
 				else w++;
 			}
 		}
-		//System.out.println("tl ="+tl.getp()+","+br.getp()+" White is"+w+" And Black is "+b);
-		return (w*0.35 >= b)?false:true;
+		double per = (b/w)*100 ;
+		//System.out.println("tl ="+tl.getp()+","+br.getp()+" White is"+w+" And Black is "+b+"Percent "+ per);
+		return (per <= fact)?false:true;
 	}
 	/***
 	 * Setting Edges points

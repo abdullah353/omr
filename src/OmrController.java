@@ -14,8 +14,9 @@ import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import org.bytedeco.javacpp.opencv_core.CvPoint;
 
 import com.google.gson.JsonArray;
 import com.google.zxing.BinaryBitmap;
@@ -87,11 +88,13 @@ class OmrController extends Config{
 			
 			for ( File file : filesInDirectory ) {
 				logger.log(Level.INFO,"Selected file "+file.getName());
-			    sheet.setpaths(file.getName(), directory.toString());
-			    view.filename.setText("Scaning "+file.getName());
+				sheet.setpaths(file.getName(), directory.toString());
+				view.filename.setText("Scaning "+file.getName());
 				view.dir.setText(sheet.path);
 				if(sheet.init()){
-					if(sheet.lookref()){
+					sheet.lookref();
+					sheet.slice();
+					if(false){
 						System.out.println("Unit Found Unit="+sheet.unit);
 						if(sheet.checkAnchors() || !sheet.checkAnchors()){
 							System.out.println("Anchors Checked");
@@ -143,7 +146,7 @@ class OmrController extends Config{
 		//logger.log(Level.INFO,"Options Details "+sheet.getOptSeq());
 		
 	}
-	public void initQuestions(int total,int[] options, JsonArray tcols, JsonArray trows, int avgr ) {
+	public void initQuestions(int total,int[] options, JsonArray tcols, JsonArray trows, int avgr) {
 		sheet.setQuestions(total);
 		sheet.questions.addAllQuestions(options,sheet.filename);
 		//sheet.questions.getQuestion(0).setOverview(sheet.unit);

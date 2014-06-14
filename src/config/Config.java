@@ -6,15 +6,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import org.bytedeco.javacpp.opencv_core.CvPoint;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 public class Config {
 	public 	String DR,ext,excelname;
-	public double markth= 200,quth=240;
+	public double markth= 200,quth=55;
 	public boolean 	Debug = true,
 					extra = true,
 					appendlog = true;

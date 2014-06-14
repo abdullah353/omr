@@ -2,6 +2,8 @@
 import static org.bytedeco.javacpp.opencv_core.CV_AA;
 import static org.bytedeco.javacpp.opencv_core.IPL_DEPTH_8U;
 import static org.bytedeco.javacpp.opencv_core.cvCircle;
+import static org.bytedeco.javacpp.opencv_core.cvCopy;
+import static org.bytedeco.javacpp.opencv_core.cvSetImageROI;
 import static org.bytedeco.javacpp.opencv_core.cvCreateImage;
 import static org.bytedeco.javacpp.opencv_core.cvGetSeqElem;
 import static org.bytedeco.javacpp.opencv_core.cvGetSize;
@@ -44,6 +46,7 @@ import org.bytedeco.javacpp.opencv_core.CvMemStorage;
 import org.bytedeco.javacpp.opencv_core.CvPoint;
 import org.bytedeco.javacpp.opencv_core.CvPoint2D32f;
 import org.bytedeco.javacpp.opencv_core.CvPoint3D32f;
+import org.bytedeco.javacpp.opencv_core.CvRect;
 import org.bytedeco.javacpp.opencv_core.CvScalar;
 import org.bytedeco.javacpp.opencv_core.CvSeq;
 import org.bytedeco.javacpp.opencv_core.IplImage;
@@ -67,8 +70,9 @@ public class OmrModel extends Config{
 	private FileHandler fh;
 	String filename,path,nameonly,sheetid,aid,dkey;
 	Rectangle mtl,mcl,mrr,qr;
-	private CvPoint corner;
+	private CvPoint corner,Qstp,Qsbr,Qrtp,Qrbr;
 	Point mtlst,mtlend;
+	double [] marktl,marktr,markcl,markbl,markbr;
 	Point orig;
 	private int unitx,dpi,avgradi;
 	private Options options;
@@ -79,6 +83,7 @@ public class OmrModel extends Config{
 	public Questions questions;
 	private JsonObject qrinfo;
 	private Seq seq;
+	
 	/*
 	 * Constructors
 	 */
@@ -90,6 +95,10 @@ public class OmrModel extends Config{
 		mtlend = new Point();
 		unit = 0;
 		corner = cvPoint(0, 0);
+		Qstp = cvPoint(0, 0);
+		Qsbr = cvPoint(0, 0);
+		Qrtp  = cvPoint(0, 0);
+		Qrbr  = cvPoint(0, 0);
 	}
 	
 	/*
@@ -257,7 +266,7 @@ public class OmrModel extends Config{
 		List<Integer> units = new ArrayList<Integer>();
 		double 	parea = imgx.height()*imgx.width(),
 				s = imgx.height()/11.69;
-    	
+		
 		int 	MinArea = (130 <= s && s <= 160)? 4000:20000,
 				MaxArea = (130 <= s && s <= 160)? 7000:30000,
 				sum = 0,
@@ -266,17 +275,32 @@ public class OmrModel extends Config{
 		unitx =(130 <= dpi && dpi <= 160)? 28:58;
 		System.out.println("dpi is "+s+" Min "+MinArea+" Max "+MaxArea);
 		IplImage 	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
+					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels()),
+					imgxd2 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					imgxd3 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					imgxd4 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1);
+		/* OLD
 		imgxc1 = imgx.clone();
 		cvCvtColor(imgx, imgxd1, CV_BGR2GRAY);
 		cvSmooth( imgxd1, imgxd1,CV_GAUSSIAN,9,9,2,2);
-		units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
-		//ShowImage(imgxc1, "WorkingImage", 512);
+		*/
+		imgxc1 = imgx.clone(); 
+		cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
+		cvCanny(imgxd1,imgxd3,0,300);
+		cvSmooth(imgxd1,imgxd2,CV_GAUSSIAN,9,9,2,2);
+		
+		//cvThreshold(imgxd4,imgxd2, 127, 255, CV_THRESH_BINARY);
+		//System.out.println(imgxd1.height());
+		//units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
+		regionchck(imgxd2,imgxc1, MinArea,MaxArea, "topleft");
+		ShowImage(imgxc1, "WorkingImage", 512);
+		/*
 		for (int i = 0; i < units.size(); i++) {
 			sum += units.get(i);
 		}
 		avg = sum/units.size();
-		estimatecorner(avg,MinArea,MaxArea);
+		*/
+		//estimatecorner(2,MinArea,MaxArea);
 		cvSaveImage("debug/"+filename+"FIRST-imgxc1.jpg", imgxc1);
 		return true;
 	}
@@ -286,23 +310,26 @@ public class OmrModel extends Config{
 		IplImage 	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
 					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
 		imgxc1 = imgx.clone(); 
-        cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
-        cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
-        cvCanny(imgxd1,imgxd1,0,300);
-        cvThreshold(imgxd1,imgxd1, 127, 255, CV_THRESH_BINARY);
-        //cvSaveImage(filename+"imgxc1canny.jpg", imgxd1);
-        
-        //ShowImage(imgxd1, "imgxd1",512);
-        units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
+		cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
+		//cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
+		cvCanny(imgxd1,imgxd1,0,300);
+		cvThreshold(imgxd1,imgxd1, 127, 255, CV_THRESH_BINARY);
+		cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
+		//cvSaveImage(filename+"imgxc1canny.jpg", imgxd1);
+		
+		//ShowImage(imgxd1, "imgxd1",512);
+		//units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
+		regionchck(imgxd1,imgxc1, MinArea,MaxArea, "custom");
 		//ShowImage(imgxc1, "WorkingImage", 512);
+		/*
 		for (int i = 0; i < units.size(); i++) {
 			sum += units.get(i);
 		}
 		avg2 = sum/units.size();
-        
-        //ShowImage(imgxc1, "imgsssss1",512);
-        cvSaveImage("debug/"+filename+"SECOND-imgxc1.jpg", imgxc1);
-		setUnitOrig(avg2,corner.x(),corner.y());
+		*/
+		ShowImage(imgxc1, "imgsssss1",512);
+		//cvSaveImage("debug/"+filename+"SECOND-imgxc1.jpg", imgxc1);
+		//setUnitOrig(avg2,corner.x(),corner.y());
 	}
 
 	/***
@@ -364,7 +391,7 @@ public class OmrModel extends Config{
 	public boolean setQuestions(int count){
 		if(count<=40){
 			logger.log(Level.SEVERE,"Actual Quesitions in Quiz are"+count);
-			questions = new Questions(count, unit, image,orig,getcols(),getrows(),avgr());
+			questions = new Questions(count, unit, image,orig,getcols(),getrows(),avgr(),Qstp,Qsbr);
 			return true;
 		}
 		logger.log(Level.SEVERE,"Total Questions found from Server exceeded the limit of 40");
@@ -388,92 +415,124 @@ public class OmrModel extends Config{
 	 * @param yMax
 	 * @param Thick
 	 */
-    public static void Highlight(IplImage image, int xMin, int yMin, int xMax, int yMax, int Thick){
-        CvPoint pt1 = cvPoint(xMin,yMin);
-        CvPoint pt2 = cvPoint(xMax,yMax);
-        CvScalar color = cvScalar(255,0,0,0);       // blue [green] [red]
-        cvRectangle(image, pt1, pt2, color, Thick, 4, 0);
-    }
-    /***
-     * Overloaded Show Image
-     * @param image
-     * @param caption
-     * @param size
-     */
-    public static void ShowImage(IplImage image, String caption, int size){
-        if(size < 128) size = 128;
-        CvMat mat = image.asCvMat();
-        int width = mat.cols(); if(width < 1) width = 1;
-        int height = mat.rows(); if(height < 1) height = 1;
-        double aspect = 1.0 * width / height;
-        if(height != size) { height = size; width = (int) ( height * aspect ); }
-        if(width != size) width = size;
-        height = (int) ( width / aspect );
-        ShowImage(image, caption, width, height);
-    }
-    /***
-     * Show Image
-     * @param image
-     * @param caption
-     * @param width
-     * @param height
-     */
-    public static void ShowImage(IplImage image, String caption, int width, int height)
-    {
-        CanvasFrame canvas = new CanvasFrame(caption, 1);   // gamma=1
-        canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
-        canvas.setCanvasSize(width, height);
-        canvas.showImage(image);
-    }
-    /***
-     * Detecting references for specified region of page
-     * @param imgxc1
-     * @param MinArea
-     * @param loc
-     * @return
-     */
-    public List<Integer> regionchck(IplImage imgxd1,IplImage imgxc1,int MinArea,int MaxArea,String loc){
-    	List<Integer> units = new ArrayList<Integer>();
-    	Blobs 	Regions = new Blobs();
-    	int stx = 0, sty = 0,
-    		enx = 0, eny = 0;
-    	if(loc.equals("topleft")){
-    		stx = 0; sty = 0;
-    		enx = imgxd1.width(); eny = imgxd1.height()/4;
-    	}else if(loc.equals("topright")){
-    		stx = 800; sty = 800;
-    		enx =  imgxd1.width(); eny = imgxd1.height();    		
-    	}
-    	Regions.BlobAnalysis(
-				imgxd1,		// image
-                stx, sty,   // ROI start col, row
-                enx,eny,	// ROI cols, rows                 
-                1,          // border (0 = black; 1 = white)
-                MinArea);   // minarea
-		for(int i = 1; i <= Blobs.MaxLabel; i++)
-        {
-            double [] Region = Blobs.RegionData[i];
-            if(!(Region[Blobs.BLOBAREA] > MaxArea)){
-            int Parent = (int) Region[Blobs.BLOBPARENT];
-            int Color = (int) Region[Blobs.BLOBCOLOR];
-            int MinX = (int) Region[Blobs.BLOBMINX];
-            int MaxX = (int) Region[Blobs.BLOBMAXX];
-            int MinY = (int) Region[Blobs.BLOBMINY];
-            int MaxY = (int) Region[Blobs.BLOBMAXY];
-            if(i==1){
-            	corner.x(MinX);
-            	corner.y(MinY);
-            }
-            units.add(MaxY-MinY);
-            System.out.println("Expected unit is "+(MaxY-MinY)+"Color is"+Color+" Parent "+Region[Blobs.BLOBSUMXX]);
-            //System.out.println(MinX+","+MinY+"  "+MaxX+","+MaxY+" AREA + "+bArea+ " percentage"+perc*100+"diagl "+distance(p1, p2));
-            Highlight(imgxc1,  MinX, MinY, MaxX, MaxY, 2);
-            }else{
-            	System.out.println("TOO LARGE AREA"+Region[Blobs.BLOBAREA]);
-            }
-        }
-		return units;
-    }
+	public static void Highlight(IplImage image, int xMin, int yMin, int xMax, int yMax, int Thick){
+		CvPoint pt1 = cvPoint(xMin,yMin);
+		CvPoint pt2 = cvPoint(xMax,yMax);
+		CvScalar color = cvScalar(255,0,0,0);     // blue [green] [red]
+		cvRectangle(image, pt1, pt2, color, Thick, 4, 0);
+	}
+	/***
+	 * Overloaded Show Image
+	 * @param image
+	 * @param caption
+	 * @param size
+	 */
+	public static void ShowImage(IplImage image, String caption, int size){
+		if(size < 128) size = 128;
+		CvMat mat = image.asCvMat();
+		int width = mat.cols(); if(width < 1) width = 1;
+		int height = mat.rows(); if(height < 1) height = 1;
+		double aspect = 1.0 * width / height;
+		if(height != size) { height = size; width = (int) ( height * aspect ); }
+		if(width != size) width = size;
+		height = (int) ( width / aspect );
+		ShowImage(image, caption, width, height);
+	}
+	/***
+	 * Show Image
+	 * @param image
+	 * @param caption
+	 * @param width
+	 * @param height
+	 */
+	public static void ShowImage(IplImage image, String caption, int width, int height)
+	{
+		CanvasFrame canvas = new CanvasFrame(caption, 1);   // gamma=1
+		canvas.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+		canvas.setCanvasSize(width, height);
+		canvas.showImage(image);
+	}
+	/***
+	 * Detecting references for specified region of page
+	 * @param imgxc1
+	 * @param MinArea
+	 * @param loc
+	 * @return
+	 */
+	public List<Integer> regionchck(IplImage imgxd1,IplImage imgxc1,int MinArea,int MaxArea,String loc){
+		List<Integer> units = new ArrayList<Integer>();
+		Blobs   Regions = new Blobs();
+		int stx = 0, sty = 0,
+		enx = 0, eny = 0;
+		if(loc.equals("topleft")){
+			stx = 0; sty = 0;
+			enx = imgxd1.width(); eny = imgxd1.height();
+		}else if(loc.equals("custom")){
+			stx = (int) marktl[Blobs.BLOBMINX]; sty = (int) marktl[Blobs.BLOBMINY];
+			enx =  (int) markbr[Blobs.BLOBMAXX]; eny = (int) markbr[Blobs.BLOBMAXY];
+		}
+		Regions.BlobAnalysis(
+			imgxd1,		// image
+			stx, sty,	// ROI start col, row
+			enx,eny,	// ROI cols, rows         
+			1,			// border (0 = black; 1 = white)
+			MinArea);	// minarea
+		int j = 1;
+		for(int i = 1; i <= Blobs.MaxLabel; i++){
+			double [] Region = Blobs.RegionData[i];
+			if(!(Region[Blobs.BLOBAREA] > MaxArea)){
+				int Color = (int) Region[Blobs.BLOBCOLOR];
+				int MinX = (int) Region[Blobs.BLOBMINX];
+				int MaxX = (int) Region[Blobs.BLOBMAXX];
+				int MinY = (int) Region[Blobs.BLOBMINY];
+				int MaxY = (int) Region[Blobs.BLOBMAXY];
+				System.out.println("J="+j+" ("+MinX+","+MaxY+")");
+				switch(j){
+					case 1:
+						marktl = Region.clone();
+						break;
+					case 2:
+						marktr = Region.clone();
+						break;
+					case 3:
+						markcl = Region.clone();
+						break;
+					case 4:
+						markbl = Region.clone();
+						break;
+					case 5:
+						markbr = Region.clone();
+						break;
+				}
+				j++;
+				/*
+				if(j==1){
+					marktl = Region.clone();
+					corner.x(MinX);
+					corner.y(MinY);
+					Qrtp.x(MinX);
+					Qrtp.y(MaxY);
+				}else if(j==2){
+					System.out.println("J=2 ("+MinX+","+MaxY+")");
+					marktr = Region.clone();
+					Qrbr.x(MaxX);
+					Qrbr.y(MinY);
+					Qstp.x(MinX);
+					Qstp.y(MaxY);
+				}else if(j==3){
+					markcl = Region.clone();
+				}
+				
+				units.add(MaxY-MinY);*/
+				//System.out.println("Expected unit is "+(MaxY-MinY)+"Color is"+Color+" Parent "+Region[Blobs.BLOBSUMXX]);
+				//System.out.println(MinX+","+MinY+"  "+MaxX+","+MaxY+" AREA + "+bArea+ " percentage"+perc*100+"diagl "+distance(p1, p2));
+				Highlight(imgxc1,  MinX, MinY, MaxX, MaxY, 2);
+			}else{
+				System.out.println("TOO LARGE AREA"+Region[Blobs.BLOBAREA]);
+			}
+		}
+	return units;
+	}
 
 	public void circle() {
 		int MinArea = 6;
@@ -590,5 +649,19 @@ public class OmrModel extends Config{
 	}
 	public int avgr(){
 		return avgradi;
+	}
+	
+	public IplImage Cropper(IplImage orig,CvRect r){
+		r = new CvRect();
+		r.position(0);
+		cvSetImageROI(orig, r);
+		IplImage cropped = cvCreateImage(cvGetSize(orig), orig.depth(), orig.nChannels());
+		cvCopy(orig, cropped);
+		return cropped;
+	}
+
+	public void slice() {
+		System.out.println("Slicing Images for QrCode Area, Question Area");
+		System.out.println("QRCODE TPL ("+marktl[Blobs.BLOBMINX]+","+marktl[Blobs.BLOBMAXY]+") BR ("+markcl[Blobs.BLOBMAXX]+","+markcl[Blobs.BLOBMINY]+")");
 	}
 }
