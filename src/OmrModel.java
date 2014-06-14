@@ -50,6 +50,7 @@ import org.bytedeco.javacpp.opencv_core.CvRect;
 import org.bytedeco.javacpp.opencv_core.CvScalar;
 import org.bytedeco.javacpp.opencv_core.CvSeq;
 import org.bytedeco.javacpp.opencv_core.IplImage;
+import org.bytedeco.javacpp.opencv_legacy.CvImage;
 import org.bytedeco.javacv.Blobs;
 import org.bytedeco.javacv.CanvasFrame;
 
@@ -274,33 +275,19 @@ public class OmrModel extends Config{
 		dpi = (int) s;
 		unitx =(130 <= dpi && dpi <= 160)? 28:58;
 		System.out.println("dpi is "+s+" Min "+MinArea+" Max "+MaxArea);
-		IplImage 	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels()),
-					imgxd2 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					imgxd3 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					imgxd4 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1);
-		/* OLD
-		imgxc1 = imgx.clone();
-		cvCvtColor(imgx, imgxd1, CV_BGR2GRAY);
-		cvSmooth( imgxd1, imgxd1,CV_GAUSSIAN,9,9,2,2);
-		*/
+		IplImage 	gray = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					binary = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					smooth = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					canny = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
 		imgxc1 = imgx.clone(); 
-		cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
-		cvCanny(imgxd1,imgxd3,0,300);
-		cvSmooth(imgxd1,imgxd2,CV_GAUSSIAN,9,9,2,2);
-		
-		//cvThreshold(imgxd4,imgxd2, 127, 255, CV_THRESH_BINARY);
-		//System.out.println(imgxd1.height());
-		//units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
-		regionchck(imgxd2,imgxc1, MinArea,MaxArea, "topleft");
+		cvCvtColor(imgxc1, gray, CV_BGR2GRAY);
+		//cvCanny(imgxd1,imgxd1,0,300);
+		cvThreshold(gray,binary, 127, 255, CV_THRESH_BINARY);
+		cvSmooth(binary,smooth,CV_GAUSSIAN,9,9,2,2);
+		regionchck(smooth,imgxc1, MinArea,MaxArea, "top");
+		regionchck(smooth,imgxc1, MinArea,MaxArea, "bottom");
 		ShowImage(imgxc1, "WorkingImage", 512);
-		/*
-		for (int i = 0; i < units.size(); i++) {
-			sum += units.get(i);
-		}
-		avg = sum/units.size();
-		*/
-		//estimatecorner(2,MinArea,MaxArea);
 		cvSaveImage("debug/"+filename+"FIRST-imgxc1.jpg", imgxc1);
 		return true;
 	}
@@ -461,20 +448,34 @@ public class OmrModel extends Config{
 	 */
 	public List<Integer> regionchck(IplImage imgxd1,IplImage imgxc1,int MinArea,int MaxArea,String loc){
 		List<Integer> units = new ArrayList<Integer>();
-		Blobs   Regions = new Blobs();
+		Blobs	Regions = new Blobs();
 		int stx = 0, sty = 0,
-		enx = 0, eny = 0;
-		if(loc.equals("topleft")){
+		enx = 0, eny = 0,cust = 0;
+		if(loc.equals("top")){
 			stx = 0; sty = 0;
-			enx = imgxd1.width(); eny = imgxd1.height();
-		}else if(loc.equals("custom")){
-			stx = (int) marktl[Blobs.BLOBMINX]; sty = (int) marktl[Blobs.BLOBMINY];
-			enx =  (int) markbr[Blobs.BLOBMAXX]; eny = (int) markbr[Blobs.BLOBMAXY];
+			enx = imgxd1.width(); eny = imgxd1.height()/4;
+		}else if(loc.equals("bottom")){
+			stx = 0;
+			
+			cust = (int) marktr[Blobs.BLOBMINX];
+			sty = 4* ((int) marktl[Blobs.BLOBMINY] - (int) markcl[Blobs.BLOBMAXY]);
+			enx =  imgxd1.width();
+			eny = imgxd1.height();
+			CvRect r = new CvRect();
+			r.x(stx);
+			r.y(imgxd1.height()/2);
+			r.height(imgxd1.height());
+			r.width(imgxd1.width());
+			//After setting ROI (Region-Of-Interest) all processing will only be done on the ROI
+			cvSetImageROI(imgxd1, r);
+			ShowImage(imgxd1, "AA", 512);
+			
 		}
+		
 		Regions.BlobAnalysis(
 			imgxd1,		// image
 			stx, sty,	// ROI start col, row
-			enx,eny,	// ROI cols, rows         
+			enx,eny,	// ROI cols, rows
 			1,			// border (0 = black; 1 = white)
 			MinArea);	// minarea
 		int j = 1;
@@ -486,47 +487,41 @@ public class OmrModel extends Config{
 				int MaxX = (int) Region[Blobs.BLOBMAXX];
 				int MinY = (int) Region[Blobs.BLOBMINY];
 				int MaxY = (int) Region[Blobs.BLOBMAXY];
-				System.out.println("J="+j+" ("+MinX+","+MaxY+")");
-				switch(j){
+				System.out.println("J="+j+" ("+MinX+","+(MinY+cust)+")");
+				if(cust == 0){
+					switch(j){
+						case 1:
+							marktl = Region.clone();
+							break;
+						case 2:
+							marktr = Region.clone();
+							break;
+						case 3:
+							markcl = Region.clone();
+							break;
+						default:
+							logger.log(Level.SEVERE,"Found More Than Three Anchors");
+							break;
+					}
+				}else{
+					switch(j){
 					case 1:
-						marktl = Region.clone();
+						markbl = Region.clone();
+						markbl[Blobs.BLOBMINY] = MinY+cust;
+						markbl[Blobs.BLOBMAXY] = MaxY+cust;
 						break;
 					case 2:
-						marktr = Region.clone();
-						break;
-					case 3:
-						markcl = Region.clone();
-						break;
-					case 4:
-						markbl = Region.clone();
-						break;
-					case 5:
 						markbr = Region.clone();
+						markbr[Blobs.BLOBMINY] = MinY+cust;
+						markbr[Blobs.BLOBMAXY] = MaxY+cust;
 						break;
+					default:
+						logger.log(Level.SEVERE,"Found More Than Two Bottom Anchors");
+						break;
+				}
 				}
 				j++;
-				/*
-				if(j==1){
-					marktl = Region.clone();
-					corner.x(MinX);
-					corner.y(MinY);
-					Qrtp.x(MinX);
-					Qrtp.y(MaxY);
-				}else if(j==2){
-					System.out.println("J=2 ("+MinX+","+MaxY+")");
-					marktr = Region.clone();
-					Qrbr.x(MaxX);
-					Qrbr.y(MinY);
-					Qstp.x(MinX);
-					Qstp.y(MaxY);
-				}else if(j==3){
-					markcl = Region.clone();
-				}
-				
-				units.add(MaxY-MinY);*/
-				//System.out.println("Expected unit is "+(MaxY-MinY)+"Color is"+Color+" Parent "+Region[Blobs.BLOBSUMXX]);
-				//System.out.println(MinX+","+MinY+"  "+MaxX+","+MaxY+" AREA + "+bArea+ " percentage"+perc*100+"diagl "+distance(p1, p2));
-				Highlight(imgxc1,  MinX, MinY, MaxX, MaxY, 2);
+				Highlight(imgxc1,  MinX, MinY+cust, MaxX, MaxY+cust, 2);
 			}else{
 				System.out.println("TOO LARGE AREA"+Region[Blobs.BLOBAREA]);
 			}
@@ -556,8 +551,8 @@ public class OmrModel extends Config{
 		//IplImage BWImage = cvCreateImage(cvGetSize(GrayImage), IPL_DEPTH_8U, 1); 
 		cvThreshold(imgxd1, imgxd1, 200, 255, CV_THRESH_BINARY);
 		//ShowImage(BWImage, "ThreshHolding");
-		CvSeq contours = new CvSeq();;  //hold the pointer to a contour in the memory block
-		CvSeq result = new CvSeq();;   //hold sequence of points of a contour
+		CvSeq contours = new CvSeq();	//hold the pointer to a contour in the memory block
+		CvSeq result = new CvSeq();		//hold sequence of points of a contour
 		CvMemStorage storage =CvMemStorage.create(); //storage area for all contours
 		
 		//cvFindContours(BWImage, storage, contours, Loader.sizeof(CvContour.class), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
