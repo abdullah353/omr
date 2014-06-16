@@ -61,8 +61,6 @@ import com.google.gson.JsonParser;
 import config.Config;
 
 
-
-
 public class OmrModel extends Config{
 	/*
 	 * Attributes
@@ -282,41 +280,41 @@ public class OmrModel extends Config{
 					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
 		imgxc1 = imgx.clone(); 
 		cvCvtColor(imgxc1, gray, CV_BGR2GRAY);
-		//cvCanny(imgxd1,imgxd1,0,300);
-		cvThreshold(gray,binary, 127, 255, CV_THRESH_BINARY);
-		cvSmooth(binary,smooth,CV_GAUSSIAN,9,9,2,2);
-		regionchck(smooth,imgxc1, MinArea,MaxArea, "top");
-		regionchck(smooth,imgxc1, MinArea,MaxArea, "bottom");
+		cvThreshold(gray,gray, 127, 255, CV_THRESH_BINARY);
+		cvSmooth(gray,gray,CV_GAUSSIAN,9,9,2,2);
+		cvCanny(gray,canny,0,300);
+		//cvSmooth(gray,gray,CV_GAUSSIAN,9,9,2,2);
+		//cvThreshold(gray,gray, 127, 255, CV_THRESH_BINARY);
+		regionchck(canny,imgxc1, MinArea,MaxArea, "top");
+		regionchck(gray,imgxc1, MinArea,MaxArea, "bottom");
 		ShowImage(imgxc1, "WorkingImage", 512);
 		cvSaveImage("debug/"+filename+"FIRST-imgxc1.jpg", imgxc1);
+		drawmarkers(imgxc1);
 		return true;
 	}
-	private void estimatecorner(int avg,int MinArea,int MaxArea) {
-		List<Integer> units = new ArrayList<Integer>();
-		int sum =0,avg2=0;
-		IplImage 	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
-		imgxc1 = imgx.clone(); 
-		cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
-		//cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
-		cvCanny(imgxd1,imgxd1,0,300);
-		cvThreshold(imgxd1,imgxd1, 127, 255, CV_THRESH_BINARY);
-		cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
-		//cvSaveImage(filename+"imgxc1canny.jpg", imgxd1);
-		
-		//ShowImage(imgxd1, "imgxd1",512);
-		//units.addAll(regionchck(imgxd1,imgxc1, MinArea,MaxArea, "topleft"));
-		regionchck(imgxd1,imgxc1, MinArea,MaxArea, "custom");
-		//ShowImage(imgxc1, "WorkingImage", 512);
-		/*
-		for (int i = 0; i < units.size(); i++) {
-			sum += units.get(i);
+
+	private void drawmarkers(IplImage imgin) {
+		IplImage imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
+		imgxc1 = imgin.clone();
+		int avg = 0;
+		List<double[]> ms = new ArrayList<double[]>();
+		ms.add(marktl);
+		ms.add(marktr);
+		ms.add(markcl);
+		ms.add(markbl);
+		ms.add(markbr);
+		for (int i = 0; i < ms.size(); i++) {
+			int MinX = (int) ms.get(i)[Blobs.BLOBMINX],
+				MinY = (int) ms.get(i)[Blobs.BLOBMINY],
+				MaxX = (int) ms.get(i)[Blobs.BLOBMAXX],
+				MaxY = (int) ms.get(i)[Blobs.BLOBMAXY];
+				avg += (MaxY-MinY);
+				System.out.println("UNIT IS"+(MaxY-MinY));
+			Highlight(imgin,  MinX, MinY, MaxX, MaxY, 2);
 		}
-		avg2 = sum/units.size();
-		*/
-		ShowImage(imgxc1, "imgsssss1",512);
-		//cvSaveImage("debug/"+filename+"SECOND-imgxc1.jpg", imgxc1);
-		//setUnitOrig(avg2,corner.x(),corner.y());
+		System.out.println("UNIT IS"+(avg/ms.size()));
+		setUnitOrig((avg/ms.size()),(int) marktl[Blobs.BLOBMINX],(int) marktl[Blobs.BLOBMINY]);
+		cvSaveImage("debug/1FIRST-imgxc1.jpg", imgin);
 	}
 
 	/***
@@ -456,20 +454,16 @@ public class OmrModel extends Config{
 			enx = imgxd1.width(); eny = imgxd1.height()/4;
 		}else if(loc.equals("bottom")){
 			stx = 0;
-			
-			cust = (int) marktr[Blobs.BLOBMINX];
-			sty = 4* ((int) marktl[Blobs.BLOBMINY] - (int) markcl[Blobs.BLOBMAXY]);
+			cust = imgxd1.height() - (imgxd1.height()/4);
 			enx =  imgxd1.width();
 			eny = imgxd1.height();
 			CvRect r = new CvRect();
 			r.x(stx);
-			r.y(imgxd1.height()/2);
+			r.y(cust);
 			r.height(imgxd1.height());
 			r.width(imgxd1.width());
 			//After setting ROI (Region-Of-Interest) all processing will only be done on the ROI
 			cvSetImageROI(imgxd1, r);
-			ShowImage(imgxd1, "AA", 512);
-			
 		}
 		
 		Regions.BlobAnalysis(
@@ -487,7 +481,7 @@ public class OmrModel extends Config{
 				int MaxX = (int) Region[Blobs.BLOBMAXX];
 				int MinY = (int) Region[Blobs.BLOBMINY];
 				int MaxY = (int) Region[Blobs.BLOBMAXY];
-				System.out.println("J="+j+" ("+MinX+","+(MinY+cust)+")");
+				System.out.println("J="+j+" ("+MinX+","+(MinY+Math.abs(cust))+")");
 				if(cust == 0){
 					switch(j){
 						case 1:
@@ -507,21 +501,21 @@ public class OmrModel extends Config{
 					switch(j){
 					case 1:
 						markbl = Region.clone();
-						markbl[Blobs.BLOBMINY] = MinY+cust;
-						markbl[Blobs.BLOBMAXY] = MaxY+cust;
+						markbl[Blobs.BLOBMINY] = MinY+Math.abs(cust);
+						markbl[Blobs.BLOBMAXY] = MaxY+Math.abs(cust);
 						break;
 					case 2:
 						markbr = Region.clone();
-						markbr[Blobs.BLOBMINY] = MinY+cust;
-						markbr[Blobs.BLOBMAXY] = MaxY+cust;
+						markbr[Blobs.BLOBMINY] = MinY+Math.abs(cust);
+						markbr[Blobs.BLOBMAXY] = MaxY+Math.abs(cust);
 						break;
 					default:
 						logger.log(Level.SEVERE,"Found More Than Two Bottom Anchors");
 						break;
-				}
+					}
 				}
 				j++;
-				Highlight(imgxc1,  MinX, MinY+cust, MaxX, MaxY+cust, 2);
+				//Highlight(imgxc1,  MinX, MinY+Math.abs(cust), MaxX, MaxY+Math.abs(cust), 2);
 			}else{
 				System.out.println("TOO LARGE AREA"+Region[Blobs.BLOBAREA]);
 			}
@@ -542,8 +536,21 @@ public class OmrModel extends Config{
 					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
 		imgxc1 = imgx.clone(); 
 		imgxd1 = cvCreateImage(cvGetSize(imgxc1), IPL_DEPTH_8U, 1);
-
+		
+		
 		cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
+		CvRect r = new CvRect();
+		r.x((int) markcl[Blobs.BLOBMINX]);
+		r.y((int) markcl[Blobs.BLOBMAXY]);
+		System.out.println("OFFSET IN Y"+(int) markcl[Blobs.BLOBMAXY]);
+		r.height(-(int) markcl[Blobs.BLOBMAXY] + (int) markbl[Blobs.BLOBMINY]);
+		r.width(-(int) markbl[Blobs.BLOBMINX] + (int) markbr[Blobs.BLOBMAXX]);
+		//After setting ROI (Region-Of-Interest) all processing will only be done on the ROI
+		cvSetImageROI(imgxd1, r);
+		ShowImage(imgxd1, "QUESTIONS VIEW", 512);
+		
+		
+		
 		//ShowImage(GrayImage, "CvtColor");
 		cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
 		//ShowImage(GrayImage, "Smoothing");
@@ -596,6 +603,8 @@ public class OmrModel extends Config{
 			int radius = Math.round(circle.z());
 
 			if(radius<=80){
+				center.x(center.x()+(int) markcl[Blobs.BLOBMINX]);
+				center.y(center.y()+(int) markcl[Blobs.BLOBMAXY]);
 				arx[i] = center.x();
 				ary[i] = center.y();
 				JsonObject point = new JsonObject();
@@ -618,7 +627,8 @@ public class OmrModel extends Config{
 		System.out.println(points.toString());
 		List<JsonObject> ysort = sortby(points,removeDuplicates(ary),"y");
 		addindex(ysort);*/
-		//ShowImage(imgxc1, "Canny",512);
+		ShowImage(imgxc1, "Canny",512);
+		cvSaveImage("debug/2323232332FIRST-imgxc1.jpg", imgxc1);
 	}
 	
 	

@@ -92,9 +92,9 @@ class OmrController extends Config{
 				view.filename.setText("Scaning "+file.getName());
 				view.dir.setText(sheet.path);
 				if(sheet.init()){
-					sheet.lookref();
-					sheet.slice();
-					if(false){
+					
+					if(sheet.lookref()){
+						sheet.slice();
 						System.out.println("Unit Found Unit="+sheet.unit);
 						if(sheet.checkAnchors() || !sheet.checkAnchors()){
 							System.out.println("Anchors Checked");
