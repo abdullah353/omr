@@ -1,34 +1,31 @@
 package helper;
-
-import java.awt.Rectangle;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-
-import org.bytedeco.javacpp.opencv_core.CvPoint;
-
-import com.google.gson.JsonArray;
 
 import jxl.write.Label;
 import jxl.write.WritableSheet;
 import jxl.write.WriteException;
 import jxl.write.biff.RowsExceededException;
+
+import org.bytedeco.javacpp.opencv_core.IplImage;
+
+import com.google.gson.JsonArray;
+
 import config.Config;
 
 public class Questions extends Config{
 	public ArrayList<Question> questions;
 	public int total,unit;
-	private CvPoint topl,botr;
 	private JsonArray cells,rows;
-	BufferedImage image;
+	IplImage image;
 	Point orig;
 	private int avgr;
 	/*
 	 * Constructors
 	 */
-	public Questions(int total,int unit,BufferedImage image,Point orig, JsonArray tcols, JsonArray trows,int avgr,CvPoint tl,CvPoint br){
+	public Questions(int total,int unit,IplImage image,Point orig, JsonArray tcols, JsonArray trows,int avgr){
 		this.total=total;
 		this.unit=unit;
-		this.image=image;
+		this.image=image.clone();
 		this.orig = orig;
 		this.cells = tcols;
 		this.rows = trows;
@@ -77,7 +74,18 @@ public class Questions extends Config{
 			}
 		}
 	}
+	public IplImage drawQgrid(){
+		int listsize = questions.size();
+		for(int i=0; i<listsize; i++){
+			questions.get(i).drawmaps();
+		}
+		return image;
+	}
+	
 	public String[] getGrades(){
 		return getAllOptions();
+	}
+	public IplImage getQgiven(){
+		return image;
 	}
 }

@@ -97,30 +97,6 @@ public class Config {
 		logger.setLevel(Level.ALL);
 	}
 
-	public void setlayout(int unit,int origx,int origy){
-		
-		layout = new int[4][4];
-		
-		layout[firstmark][x0] = 0*unit+origx;
-		layout[firstmark][y0] = 0*unit+origy;
-		layout[firstmark][x1] = 8*unit+origx;
-		layout[firstmark][y1] = 1*unit+origy;
-		
-		layout[secondmark][x0] = 0*unit+origx;
-		layout[secondmark][y0] = 13*unit+origy;
-		layout[secondmark][x1] = 8*unit+origx;
-		layout[secondmark][y1] = 14*unit+origy;
-		/*
-		layout[thirdmark][x0] = 27*unit+origx;
-		layout[thirdmark][y0] = 55*unit+origy;
-		layout[thirdmark][x1] = 35*unit+origx;
-		layout[thirdmark][y1] = 56*unit+origy;
-		*/
-		layout[thirdmark][x0] = 0*unit+origx;
-		layout[thirdmark][y0] = 13*unit+origy;
-		layout[thirdmark][x1] = 8*unit+origx;
-		layout[thirdmark][y1] = 14*unit+origy;
-	}
 	public void setAns(){
 		A=q1=0;
 		B=q2=1;

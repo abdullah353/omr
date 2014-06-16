@@ -2,15 +2,15 @@
 import static org.bytedeco.javacpp.opencv_core.CV_AA;
 import static org.bytedeco.javacpp.opencv_core.IPL_DEPTH_8U;
 import static org.bytedeco.javacpp.opencv_core.cvCircle;
-import static org.bytedeco.javacpp.opencv_core.cvCopy;
-import static org.bytedeco.javacpp.opencv_core.cvSetImageROI;
 import static org.bytedeco.javacpp.opencv_core.cvCreateImage;
 import static org.bytedeco.javacpp.opencv_core.cvGetSeqElem;
 import static org.bytedeco.javacpp.opencv_core.cvGetSize;
 import static org.bytedeco.javacpp.opencv_core.cvPoint;
 import static org.bytedeco.javacpp.opencv_core.cvPointFrom32f;
 import static org.bytedeco.javacpp.opencv_core.cvRectangle;
+import static org.bytedeco.javacpp.opencv_core.cvResetImageROI;
 import static org.bytedeco.javacpp.opencv_core.cvScalar;
+import static org.bytedeco.javacpp.opencv_core.cvSetImageROI;
 import static org.bytedeco.javacpp.opencv_highgui.cvLoadImage;
 import static org.bytedeco.javacpp.opencv_highgui.cvSaveImage;
 import static org.bytedeco.javacpp.opencv_imgproc.CV_BGR2GRAY;
@@ -28,18 +28,11 @@ import helper.Questions;
 import helper.Rectangle;
 import helper.Seq;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.imageio.ImageIO;
 
 import org.bytedeco.javacpp.opencv_core.CvMat;
 import org.bytedeco.javacpp.opencv_core.CvMemStorage;
@@ -50,7 +43,6 @@ import org.bytedeco.javacpp.opencv_core.CvRect;
 import org.bytedeco.javacpp.opencv_core.CvScalar;
 import org.bytedeco.javacpp.opencv_core.CvSeq;
 import org.bytedeco.javacpp.opencv_core.IplImage;
-import org.bytedeco.javacpp.opencv_legacy.CvImage;
 import org.bytedeco.javacv.Blobs;
 import org.bytedeco.javacv.CanvasFrame;
 
@@ -63,26 +55,21 @@ import config.Config;
 
 public class OmrModel extends Config{
 	/*
-	 * Attributes
-	 */
+	* Attributes
+	*/
 	private Logger logger;
 	private FileHandler fh;
 	String filename,path,nameonly,sheetid,aid,dkey;
 	Rectangle mtl,mcl,mrr,qr;
-	private CvPoint corner,Qstp,Qsbr,Qrtp,Qrbr;
-	Point mtlst,mtlend;
 	double [] marktl,marktr,markcl,markbl,markbr;
 	Point orig;
-	private int unitx,dpi,avgradi;
+	private int unit,dpi,avgradi;
 	private Options options;
-	public int 	unit;
-	BufferedImage image,debugimage;
-	private IplImage imgx;
 	double rot=0.0,uerr;
-	public Questions questions;
+	private Questions questions;
 	private JsonObject qrinfo;
 	private Seq seq;
-	
+	private IplImage	imgx,imgxd1, imgxc1;
 	/*
 	 * Constructors
 	 */
@@ -90,14 +77,7 @@ public class OmrModel extends Config{
 		logger = Logger.getLogger(OmrModel.class.getName());
 		setLog("OmrModel",fh,logger);
 		logger.log(Level.INFO, "Create Model");
-		mtlst = new Point();
-		mtlend = new Point();
 		unit = 0;
-		corner = cvPoint(0, 0);
-		Qstp = cvPoint(0, 0);
-		Qsbr = cvPoint(0, 0);
-		Qrtp  = cvPoint(0, 0);
-		Qrbr  = cvPoint(0, 0);
 	}
 	
 	/*
@@ -174,7 +154,6 @@ public class OmrModel extends Config{
 				}else{
 					break;
 				}
-						//System.out.println(getOptSeq(getQnameat(i)));
 			}
 			
 		}
@@ -185,72 +164,18 @@ public class OmrModel extends Config{
 	 * @return boolean
 	 */
 	protected boolean init(){
-		File file1 = new File(path+DR+filename);
-		try {
-			logger.log(Level.INFO, "Storing Image in Buffer");
-			image = ImageIO.read(file1);
-			imgx = cvLoadImage(path+DR+filename);
-			cvSaveImage("debug/"+filename, imgx);
-			setShapes();
-			return true;
-		} catch (IOException e) {
-			logger.log(Level.SEVERE, "Can't Open/Store Image file");
-			e.printStackTrace();
-			return false;
-		}
-	}
-	
-	/***
-	 * Setting Objects in Models
-	 */
-	public void setShapes(){
-		logger.log(Level.INFO, "Creating 3 Markers and QR");
-		mtl	 =	new Rectangle(image);
-		mcl	 =	new Rectangle(image);
-		mrr	 =	new Rectangle(image);
-		qr	 =	new Rectangle(image);
-	}
-	
-	/***
-	 * Detecting if pixel is black
-	 * @param x integer
-	 * @param y integer
-	 * @return boolean
-	 */
-	public boolean isblackp(int x,int y){
-		Color color = new Color(image.getRGB( x,y));
-		return (color.getRed() <= markth && color.getBlue() <= markth 
-				&& color.getGreen() <= markth)?true :false;
-	}
-	/***
-	 * Finding first Marker and set our unit accordingly
-	 * @return boolean
-	 */
-	public boolean foundMarker(){
-		logger.log(Level.INFO ,"Checking Whether We Found Marker");
-		logger.log(Level.INFO,"Step 1 Checking Expected Width");
-		int exp2U = 0,
-			fix,
-			hi = 0;
-		exp2U = mtlst.gety();
-		logger.log(Level.INFO ,"Checking Width expOrig y is "+exp2U);
-		int yi = exp2U;
-		int err = 0;
-		while(isblackp(mtlst.getx(),yi)){
-			hi++;
-			yi++;
-		}
-		logger.log(Level.INFO ,"Setting end y position as "+(yi-err+1));
-		if(err!=0){mtlend.sety(yi-err+1);}else{mtlend.sety(yi);}
-		fix = (err!=0)?hi-1:hi-1;
-		setUnitOrig(fix+1,mtlst.getx(),mtlst.gety());
-		logger.log(Level.INFO ,"Arbitray start"+mtlst.getp()+" mtlend "+mtlend.getp() );
+		imgx = cvLoadImage(path+DR+filename);
+		//cvSaveImage("debug/"+filename, imgx);
+		imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
+		imgxc1 = imgx.clone();
+		imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1);
+		cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
 		return true;
 	}
 	
 	/*
-	 * Setter For unit
-	 */
+	* Setter For unit
+	*/
 	public void setUnitOrig(int expu,int origx,int origy){
 		orig = new Point(origx,origy);
 		unit = expu;
@@ -262,40 +187,33 @@ public class OmrModel extends Config{
 	 * 
 	 */
 	public boolean lookref(){
-		List<Integer> units = new ArrayList<Integer>();
-		double 	parea = imgx.height()*imgx.width(),
-				s = imgx.height()/11.69;
+		double 	s = imgx.height()/11.69;
 		
 		int 	MinArea = (130 <= s && s <= 160)? 4000:20000,
-				MaxArea = (130 <= s && s <= 160)? 7000:30000,
-				sum = 0,
-				avg = 0;
+				MaxArea = (130 <= s && s <= 160)? 7000:30000;
 		dpi = (int) s;
-		unitx =(130 <= dpi && dpi <= 160)? 28:58;
+		unit =(130 <= dpi && dpi <= 160)? 28:58;
 		System.out.println("dpi is "+s+" Min "+MinArea+" Max "+MaxArea);
-		IplImage 	gray = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					binary = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					smooth = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					canny = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
-		imgxc1 = imgx.clone(); 
-		cvCvtColor(imgxc1, gray, CV_BGR2GRAY);
-		cvThreshold(gray,gray, 127, 255, CV_THRESH_BINARY);
-		cvSmooth(gray,gray,CV_GAUSSIAN,9,9,2,2);
-		cvCanny(gray,canny,0,300);
+		IplImage 	binary = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
+					canny = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1);
+
+		cvThreshold(imgxd1,binary, 127, 255, CV_THRESH_BINARY);
+		cvSmooth(binary,binary,CV_GAUSSIAN,9,9,2,2);
+		cvCanny(binary,canny,0,300);
 		//cvSmooth(gray,gray,CV_GAUSSIAN,9,9,2,2);
 		//cvThreshold(gray,gray, 127, 255, CV_THRESH_BINARY);
-		regionchck(canny,imgxc1, MinArea,MaxArea, "top");
-		regionchck(gray,imgxc1, MinArea,MaxArea, "bottom");
-		ShowImage(imgxc1, "WorkingImage", 512);
-		cvSaveImage("debug/"+filename+"FIRST-imgxc1.jpg", imgxc1);
-		drawmarkers(imgxc1);
+		regionchck(canny,MinArea,MaxArea, "top");
+		regionchck(binary,MinArea,MaxArea, "bottom");
+		//ShowImage(imgxc1, "WorkingImage", 512);
+		//cvSaveImage("debug/"+filename+"FIRST-imgxc1.jpg", imgxc1);
+		extractunit(imgxc1,false);
 		return true;
 	}
-
-	private void drawmarkers(IplImage imgin) {
-		IplImage imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
-		imgxc1 = imgin.clone();
+	/**
+	 * Expecting Unit From All Markers ,Optionally Drawing Markers On input image for debugging purposes
+	 * @param imgin
+	 */
+	private void extractunit(IplImage imgin,boolean debug) {
 		int avg = 0;
 		List<double[]> ms = new ArrayList<double[]>();
 		ms.add(marktl);
@@ -310,80 +228,46 @@ public class OmrModel extends Config{
 				MaxY = (int) ms.get(i)[Blobs.BLOBMAXY];
 				avg += (MaxY-MinY);
 				System.out.println("UNIT IS"+(MaxY-MinY));
-			Highlight(imgin,  MinX, MinY, MaxX, MaxY, 2);
+			if(debug)Highlight(imgin,  MinX, MinY, MaxX, MaxY, 2);
 		}
 		System.out.println("UNIT IS"+(avg/ms.size()));
 		setUnitOrig((avg/ms.size()),(int) marktl[Blobs.BLOBMINX],(int) marktl[Blobs.BLOBMINY]);
-		cvSaveImage("debug/1FIRST-imgxc1.jpg", imgin);
+		if(debug)cvSaveImage("debug/"+filename+"-markers.jpg", imgin);
 	}
-
 	/***
 	 * Detecting Anchors on page
 	 * @return boolean
 	 */
 	public boolean checkAnchors(){
-		setlayout(unit, orig.getx(), orig.gety());
-		mtl.setCorn(new Point(layout[firstmark][x0],layout[firstmark][y0]),
-					new Point(layout[firstmark][x1],layout[firstmark][y1]));
-		mcl.setCorn(new Point(layout[secondmark][x0],layout[secondmark][y0]),
-					new Point(layout[secondmark][x1],layout[secondmark][y1]));
-		mrr.setCorn(new Point(layout[thirdmark][x0],layout[thirdmark][y0]),
-					new Point(layout[thirdmark][x1],layout[thirdmark][y1]));
-		/***
-		 * BLOCK#1: DELETE THIS BLOCK ITS FOR CONSOLE
-		 */
-		
-		if(mtl.isBlack()){
-			System.out.println("First Anchor is valid");
-		}
-		if(mcl.isBlack()){
-			System.out.println("Second Anchor is valid");
-		}
-		if(mrr.isBlack()){
-			System.out.println("Third Anchor is cvalid");
-		}
-		
-		//showQBlueprint(q1,unit,unit);
-		
-		/***
-		 * END BLOCK#1
-		 */
-		return (mtl.isBlack() && mcl.isBlack() )?true:false;
-	}
-	public void fillimage(int x,int y,int w,int h){
-		File file1 = new File("debug/"+nameonly+".jpg");
-		try {
-			BufferedImage ebugimage = ImageIO.read(file1);
-			Graphics graph = ebugimage.createGraphics();
-			graph.setColor(Color.red);
-			graph.fillRect(x, y, h, w);
-			graph.dispose();
-			ImageIO.write(ebugimage, "jpg", new File("debug/"+nameonly+".jpg"));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		System.out.println("Marker Top Color "+marktl[Blobs.BLOBCOLOR]);
+		System.out.println("Marker Top Color "+marktr[Blobs.BLOBCOLOR]);
+		System.out.println("Marker Top Color "+markcl[Blobs.BLOBCOLOR]);
+		System.out.println("Marker Top Color "+markbl[Blobs.BLOBCOLOR]);
+		System.out.println("Marker Top Color "+markbr[Blobs.BLOBCOLOR]);
+		return true;
 	}
 
 	/***
 	 * Reseting Model
 	 */
 	public void resetModel(){
-		mtlst.empty();
-		mtlend.empty();
-		unit = 0;;
+		
+		unit = 0;
 	}
 	public boolean setQuestions(int count){
 		if(count<=40){
 			logger.log(Level.SEVERE,"Actual Quesitions in Quiz are"+count);
-			questions = new Questions(count, unit, image,orig,getcols(),getrows(),avgr(),Qstp,Qsbr);
+			questions = new Questions(count, unit, imgx,orig,getcols(),getrows(),avgr());
 			return true;
 		}
 		logger.log(Level.SEVERE,"Total Questions found from Server exceeded the limit of 40");
 		//questions = new Questions(count, unit, image,orig);
 		return true;
 	}
-
+	public void fillQuestions(int[] optionscount){
+		questions.addAllQuestions(optionscount,filename);
+		ShowImage(questions.getQgiven(), "QUESTION SHEET", 512);
+	}
 	public void setpaths(String name, String directory) {
 		filename = name;
 		path = directory;
@@ -444,48 +328,43 @@ public class OmrModel extends Config{
 	 * @param loc
 	 * @return
 	 */
-	public List<Integer> regionchck(IplImage imgxd1,IplImage imgxc1,int MinArea,int MaxArea,String loc){
-		List<Integer> units = new ArrayList<Integer>();
+	public void regionchck(IplImage arg,int MinArea,int MaxArea,String loc){
 		Blobs	Regions = new Blobs();
 		int stx = 0, sty = 0,
 		enx = 0, eny = 0,cust = 0;
 		if(loc.equals("top")){
 			stx = 0; sty = 0;
-			enx = imgxd1.width(); eny = imgxd1.height()/4;
+			enx = arg.width(); eny = arg.height()/4;
 		}else if(loc.equals("bottom")){
 			stx = 0;
-			cust = imgxd1.height() - (imgxd1.height()/4);
-			enx =  imgxd1.width();
-			eny = imgxd1.height();
+			cust = arg.height() - (arg.height()/4);
+			enx =  arg.width();
+			eny = arg.height();
 			CvRect r = new CvRect();
 			r.x(stx);
 			r.y(cust);
-			r.height(imgxd1.height());
-			r.width(imgxd1.width());
+			r.height(arg.height());
+			r.width(arg.width());
 			//After setting ROI (Region-Of-Interest) all processing will only be done on the ROI
-			cvSetImageROI(imgxd1, r);
+			cvSetImageROI(arg, r);
 		}
 		
 		Regions.BlobAnalysis(
-			imgxd1,		// image
+			arg,		// image
 			stx, sty,	// ROI start col, row
 			enx,eny,	// ROI cols, rows
 			1,			// border (0 = black; 1 = white)
 			MinArea);	// minarea
+		cvResetImageROI(arg);
 		int j = 1;
 		for(int i = 1; i <= Blobs.MaxLabel; i++){
 			double [] Region = Blobs.RegionData[i];
 			if(!(Region[Blobs.BLOBAREA] > MaxArea)){
-				int Color = (int) Region[Blobs.BLOBCOLOR];
-				int MinX = (int) Region[Blobs.BLOBMINX];
-				int MaxX = (int) Region[Blobs.BLOBMAXX];
-				int MinY = (int) Region[Blobs.BLOBMINY];
-				int MaxY = (int) Region[Blobs.BLOBMAXY];
-				System.out.println("J="+j+" ("+MinX+","+(MinY+Math.abs(cust))+")");
 				if(cust == 0){
 					switch(j){
 						case 1:
 							marktl = Region.clone();
+							//marktl[Blobs.BLOBMAXX]= marktl[Blobs.BLOBMAXX]-20;
 							break;
 						case 2:
 							marktr = Region.clone();
@@ -501,13 +380,13 @@ public class OmrModel extends Config{
 					switch(j){
 					case 1:
 						markbl = Region.clone();
-						markbl[Blobs.BLOBMINY] = MinY+Math.abs(cust);
-						markbl[Blobs.BLOBMAXY] = MaxY+Math.abs(cust);
+						markbl[Blobs.BLOBMINY] = (int) Region[Blobs.BLOBMINY]+Math.abs(cust);
+						markbl[Blobs.BLOBMAXY] = (int) Region[Blobs.BLOBMAXY]+Math.abs(cust);
 						break;
 					case 2:
 						markbr = Region.clone();
-						markbr[Blobs.BLOBMINY] = MinY+Math.abs(cust);
-						markbr[Blobs.BLOBMAXY] = MaxY+Math.abs(cust);
+						markbr[Blobs.BLOBMINY] = (int) Region[Blobs.BLOBMINY]+Math.abs(cust);
+						markbr[Blobs.BLOBMAXY] = (int) Region[Blobs.BLOBMAXY]+Math.abs(cust);
 						break;
 					default:
 						logger.log(Level.SEVERE,"Found More Than Two Bottom Anchors");
@@ -520,25 +399,9 @@ public class OmrModel extends Config{
 				System.out.println("TOO LARGE AREA"+Region[Blobs.BLOBAREA]);
 			}
 		}
-	return units;
 	}
 
 	public void circle() {
-		int MinArea = 6;
-		int ErodeCount =0;
-		int DilateCount = 0;
-		ErodeCount =2;
-		DilateCount = 1;
-		MinArea = 250;
-		
-
-		IplImage	imgxd1 = cvCreateImage(cvGetSize(imgx), IPL_DEPTH_8U, 1),
-					imgxc1 = cvCreateImage(cvGetSize(imgx), imgx.depth(), imgx.nChannels());
-		imgxc1 = imgx.clone(); 
-		imgxd1 = cvCreateImage(cvGetSize(imgxc1), IPL_DEPTH_8U, 1);
-		
-		
-		cvCvtColor(imgxc1, imgxd1, CV_BGR2GRAY);
 		CvRect r = new CvRect();
 		r.x((int) markcl[Blobs.BLOBMINX]);
 		r.y((int) markcl[Blobs.BLOBMAXY]);
@@ -547,9 +410,7 @@ public class OmrModel extends Config{
 		r.width(-(int) markbl[Blobs.BLOBMINX] + (int) markbr[Blobs.BLOBMAXX]);
 		//After setting ROI (Region-Of-Interest) all processing will only be done on the ROI
 		cvSetImageROI(imgxd1, r);
-		ShowImage(imgxd1, "QUESTIONS VIEW", 512);
-		
-		
+		//ShowImage(imgxd1, "QUESTIONS VIEW", 512);	
 		
 		//ShowImage(GrayImage, "CvtColor");
 		cvSmooth(imgxd1,imgxd1,CV_GAUSSIAN,9,9,2,2);
@@ -558,8 +419,6 @@ public class OmrModel extends Config{
 		//IplImage BWImage = cvCreateImage(cvGetSize(GrayImage), IPL_DEPTH_8U, 1); 
 		cvThreshold(imgxd1, imgxd1, 200, 255, CV_THRESH_BINARY);
 		//ShowImage(BWImage, "ThreshHolding");
-		CvSeq contours = new CvSeq();	//hold the pointer to a contour in the memory block
-		CvSeq result = new CvSeq();		//hold sequence of points of a contour
 		CvMemStorage storage =CvMemStorage.create(); //storage area for all contours
 		
 		//cvFindContours(BWImage, storage, contours, Loader.sizeof(CvContour.class), CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cvPoint(0,0));
@@ -571,16 +430,13 @@ public class OmrModel extends Config{
 		
 		//ShowImage(BWImage, "Canny");
 		//System.out.println(BWImage.height()*.05);
-		int minradii = (int) (imgxd1.height()*.0085);
-		int maxradii = (int) (imgxd1.height()*.015);
-		int avg = minradii+maxradii/2;
 		int cendist = (130 <= dpi && dpi <= 160)? 50:100,
 			canth 	= (130 <= dpi && dpi <= 160)? 100:100,
 			centh 	= (130 <= dpi && dpi <= 160)? 37:37,
 			minr 	= (130 <= dpi && dpi <= 160)? 13:23,
 			maxr 	= (130 <= dpi && dpi <= 160)? 28:56;
 		avgradi = (minr+maxr)/2;
-		//System.out.println(minradii+","+maxradii);
+
 		CvSeq circles = cvHoughCircles(
 				imgxd1, //Input image
 				storage, //Memory Storage
@@ -592,6 +448,7 @@ public class OmrModel extends Config{
 				minr, //min radius 25
 				maxr//max radius 100
 				);
+		cvResetImageROI(imgxd1);
 		int[] arx = new int[circles.total()];
 		int[] ary = new int[circles.total()];
 		List<JsonObject> points = new ArrayList<JsonObject>();
@@ -627,8 +484,8 @@ public class OmrModel extends Config{
 		System.out.println(points.toString());
 		List<JsonObject> ysort = sortby(points,removeDuplicates(ary),"y");
 		addindex(ysort);*/
-		ShowImage(imgxc1, "Canny",512);
-		cvSaveImage("debug/2323232332FIRST-imgxc1.jpg", imgxc1);
+		//ShowImage(imgxc1, "Canny",512);
+		cvSaveImage("debug/"+filename+"-trans.jpg", imgxc1);
 	}
 	
 	
@@ -655,18 +512,18 @@ public class OmrModel extends Config{
 	public int avgr(){
 		return avgradi;
 	}
-	
-	public IplImage Cropper(IplImage orig,CvRect r){
-		r = new CvRect();
-		r.position(0);
-		cvSetImageROI(orig, r);
-		IplImage cropped = cvCreateImage(cvGetSize(orig), orig.depth(), orig.nChannels());
-		cvCopy(orig, cropped);
-		return cropped;
+
+	public String[] getresults() {
+		return questions.getAllOptions();
+	}
+	public void drawgrid(){
+		cvSaveImage("debug/"+filename+"-rtQGrid.jpg",questions.drawQgrid());
+	}
+	public int[] getQrrect(){
+		return new int[] {(int) marktl[Blobs.BLOBMINX],(int) marktl[Blobs.BLOBMAXY], (int) marktl[Blobs.BLOBMAXX]-(int) marktl[Blobs.BLOBMINX] ,(int) markcl[Blobs.BLOBMINY]-(int) marktl[Blobs.BLOBMINY]};
 	}
 
-	public void slice() {
-		System.out.println("Slicing Images for QrCode Area, Question Area");
-		System.out.println("QRCODE TPL ("+marktl[Blobs.BLOBMINX]+","+marktl[Blobs.BLOBMAXY]+") BR ("+markcl[Blobs.BLOBMAXX]+","+markcl[Blobs.BLOBMINY]+")");
+	public IplImage getiplimg() {
+		return imgxc1;
 	}
 }

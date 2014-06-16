@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,8 +13,6 @@ import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.filechooser.FileNameExtensionFilter;
-
-import org.bytedeco.javacpp.opencv_core.CvPoint;
 
 import com.google.gson.JsonArray;
 import com.google.zxing.BinaryBitmap;
@@ -84,7 +80,7 @@ class OmrController extends Config{
 	class Scan implements ActionListener{
 		public void actionPerformed(ActionEvent e){
 			logger.log(Level.INFO, "Scanning process started");
-			List<String[]> supplierNames1 = new ArrayList<String[]>();
+			//List<String[]> supplierNames1 = new ArrayList<String[]>();
 			
 			for ( File file : filesInDirectory ) {
 				logger.log(Level.INFO,"Selected file "+file.getName());
@@ -94,23 +90,28 @@ class OmrController extends Config{
 				if(sheet.init()){
 					
 					if(sheet.lookref()){
-						sheet.slice();
-						System.out.println("Unit Found Unit="+sheet.unit);
-						if(sheet.checkAnchors() || !sheet.checkAnchors()){
+						//System.out.println("Unit Found Unit="+sheet.unit);
+						if(sheet.checkAnchors()){
 							System.out.println("Anchors Checked");
 							//setting up all questions
 							initDocs();
 							//sheet.drawanchors();
-							//initQuestions(sheet.getQuestions(),sheet.getoptions());
 							sheet.circle();
-							
+							initQuestions(sheet.getQuestions(),sheet.getoptions(),sheet.getcols(),sheet.getrows(),sheet.avgr());
+							String[] results = sheet.getresults();
+							sheet.drawgrid();
+							System.out.print("grade = "+Arrays.toString(results));
+							genrslt(docs,sheet.getstudent(),"OMR", results);
+							view.filename.setText("Submitting To Server");
+							docs.push();
+							view.filename.setText("Sucess");
+							/*
 							initQuestions(40,new int[] 	{6,6,6,6,6,6,6,6,6,6
 														,6,6,6,6,6,6,6,6,6,6
 														,6,6,6,6,6,6,6,6,6,6
 														,6,6,6,6,6,6,6,6,6,6}, sheet.getcols(),sheet.getrows(),sheet.avgr());
 							//System.out.println(grid.get(""+0).toString());
-							String[] results = sheet.questions.getAllOptions();
-							System.out.print("grade = "+Arrays.toString(results));
+							
 							/*
 							String[] results = sheet.questions.getAllOptions();
 							supplierNames1.add(results);
@@ -137,18 +138,19 @@ class OmrController extends Config{
 		}//actionPerformed
 	}//ActionListener
 	public void initDocs(){
-		//docs = new GetDocs(sheet.path+DR+sheet.filename);
-		//sheet.setqrinfo(docs.getqrstr());
-		//sheet.setseq(docs.getMap());
-		//logger.log(Level.INFO,"Student Name "+sheet.getstudent());
+		//System.out.println("Poitn start"+sheet.getQrrect()[0]+","+sheet.getQrrect()[1]+" Width "+sheet.getQrrect()[2]+"Height"+sheet.getQrrect()[3]);
+		docs = new GetDocs(sheet.getiplimg(),sheet.getQrrect());
+		sheet.setqrinfo(docs.getqrstr());
+		sheet.setseq(docs.getMap());
+		logger.log(Level.INFO,"Student Name "+sheet.getstudent());
 		//logger.log(Level.INFO,"Questions Details "+sheet.getQSeq().toString());
 		//logger.log(Level.INFO,"Total Questions "+sheet.getQuestions());
 		//logger.log(Level.INFO,"Options Details "+sheet.getOptSeq());
 		
 	}
-	public void initQuestions(int total,int[] options, JsonArray tcols, JsonArray trows, int avgr) {
+	public void initQuestions(int total,int[] optionscount, JsonArray tcols, JsonArray trows, int avgr) {
 		sheet.setQuestions(total);
-		sheet.questions.addAllQuestions(options,sheet.filename);
+		sheet.fillQuestions(optionscount);
 		//sheet.questions.getQuestion(0).setOverview(sheet.unit);
 	}
 	public void genrslt(GetDocs docs,String name,String enu, String[] results){
@@ -158,4 +160,5 @@ class OmrController extends Config{
 			System.out.println("Error To DB");
 		}
 	}
+
 }

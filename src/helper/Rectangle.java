@@ -1,36 +1,23 @@
 package helper;
 
-import java.awt.image.BufferedImage;
+import static org.bytedeco.javacpp.opencv_core.cvGet2D;
+import org.bytedeco.javacpp.opencv_core.CvScalar;
+import org.bytedeco.javacpp.opencv_core.IplImage;
 
-public class Rectangle extends Global{
+import config.Config;
+
+public class Rectangle extends Config{
+	private IplImage in;
 	public Point tl,br;
-	/**
-	 * Constructor
-	 */
-	public Rectangle(BufferedImage image){
-		super(image);
-		
-	};
-	/***
-	 * Checking if rectangle has excess of black pixels
-	 * @return boolean
-	 */
-	public boolean isBlack(){
-		int b=0,w=0;
-		for (int y = tl.gety(); y < br.gety(); y++) {
-			for (int x = tl.getx(); x < br.getx(); x++) {
-				if (isblackp(x,y)) b++;
-				else w++;
-			}
-		}
-		System.out.println("tl ="+tl.getp()+","+br.getp()+" White is"+w+" And Black is "+b);
-		return (w*.50 >= b)?false:true;
+	public Rectangle(IplImage in){
+		this.in = in;
 	}
+
 	public boolean isBlack(double fact){
 		double b=0,w=0;
 		for (int y = tl.gety(); y < br.gety(); y++) {
 			for (int x = tl.getx(); x < br.getx(); x++) {
-				if (isblackp(x,y,fact)) b++;
+				if (isblackp(x,y)) b++;
 				else w++;
 			}
 		}
@@ -59,5 +46,21 @@ public class Rectangle extends Global{
 	}
 	public double getwidth(){
 		return br.gety() - tl.gety();
+	}
+	/*
+	 * Detecting if pixel is black
+	 * @return boolean
+	 */
+	public boolean isblackp(int x,int y){
+		CvScalar s=cvGet2D(in,y,x);
+		//System.out.println( "B:"+ s.val(0) + " G:" + s.val(1) + " R:" + s.val(2));//Print values
+		return (s.val(2) <= markth && s.val(0) <= markth
+				&& s.val(1) <= markth)?true :false;
+	}
+	public boolean isblackp(int x,int y,double fact){
+		CvScalar s=cvGet2D(in,y,x);
+		//System.out.println( "B:"+ s.val(0) + " G:" + s.val(1) + " R:" + s.val(2));//Print values
+		return (s.val(2) <= fact && s.val(0) <= fact
+				&& s.val(1) <= fact)?true :false;
 	}
 }
