@@ -1,7 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="lib" path="lib/jxl.jar"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.6.jar"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/fluent-hc-4.2.jar"/>
+	<classpathentry kind="lib" path="lib/gson-2.2.4.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-4.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-cache-4.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpcore-4.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpcore-ab-4.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpcore-nio-4.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpmime-4.2.jar"/>
+	<classpathentry kind="lib" path="lib/lightcouch-0.0.4.jar"/>
+	<classpathentry kind="lib" path="lib/javacv/ffmpeg-linux-x86_64.jar"/>
+	<classpathentry kind="lib" path="lib/javacv/ffmpeg.jar"/>
+	<classpathentry kind="lib" path="lib/javacv/javacpp.jar"/>
+	<classpathentry kind="lib" path="lib/javacv/javacv.jar"/>
+	<classpathentry kind="lib" path="lib/javacv/opencv-linux-x86_64.jar"/>
+	<classpathentry kind="lib" path="lib/javacv/opencv.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
