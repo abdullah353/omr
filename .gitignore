@@ -16,5 +16,6 @@
 hs_err_pid*
 #Rmoving Bin
 /bin/
+/tmpfiles/
 #files 
 .gitignore.swp

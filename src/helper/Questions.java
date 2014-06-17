@@ -1,11 +1,6 @@
 package helper;
 import java.util.ArrayList;
 
-import jxl.write.Label;
-import jxl.write.WritableSheet;
-import jxl.write.WriteException;
-import jxl.write.biff.RowsExceededException;
-
 import org.bytedeco.javacpp.opencv_core.IplImage;
 
 import com.google.gson.JsonArray;
@@ -54,25 +49,6 @@ public class Questions extends Config{
 			ret[i]=questions.get(i).getResult();
 		}
 		return ret;
-	}
-	public void genExcel(WritableSheet sheets){
-		String[] selecOpt = getAllOptions();
-		Question currque;
-		for (int i = 0; i < total; i++) {
-			currque = getQuestion(i);
-			Label label = new Label(i, 0, "Question "+currque.nu); 
-			Label number = new Label(i, 1, selecOpt[i]); 
-			try {
-				sheets.addCell(label);
-				sheets.addCell(number);
-			} catch (RowsExceededException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (WriteException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 	}
 	public IplImage drawQgrid(){
 		int listsize = questions.size();

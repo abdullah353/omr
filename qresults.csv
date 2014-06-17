@@ -1,0 +1,7 @@
+[A, B, D, C, B, D, C, D, C, B, D, B, C, D, C, C, C, D, C, D, A, B, C, D, C, B, C, C, D, skip, D, C, D, skip, D, C, D, skip, B, B]
+[B, A, skip, C, skip, B, A, C, skip, B, C, skip, B, D, C, skip, A, B, C, D, C, B, D, A, B, C, B, D, A, C, B, D, C, B, D, B, A, C, skip, C]
+[skip, D, skip, D, skip, C, skip, B, skip, C, skip, D, skip, C, skip, skip, skip, skip, skip, skip, skip, skip, skip, skip, skip, skip, C, C, B, C, B, C, C, B, C, skip, B, C, skip, B]
+[B, B, C, skip, C, skip, skip, D, C, skip, skip, skip, C, skip, skip, skip, D, skip, A, D, C, C, B, D, skip, C, skip, C, skip, C, B, skip, skip, D, skip, skip, B, skip, D, skip]
+[skip, skip, B, skip, D, skip, D, skip, A, skip, skip, skip, C, C, skip, D, skip, skip, C, B, skip, B, C, D, skip, skip, D, C, skip, A, skip, skip, skip, D, skip, B, skip, A, skip, C]
+[C, skip, C, B, A, B, C, D, skip, skip, D, C, B, B, A, C, B, C, D, B, B, C, skip, B, D, C, B, B, C, D, C, B, C, B, C, A, B, C, B, skip]
+[C, B, B, B, D, D, C, C, C, skip, B, D, skip, skip, C, skip, skip, skip, skip, skip, B, skip, skip, skip, skip, D, D, A, A, skip, skip, skip, skip, D, skip, skip, skip, skip, skip, skip]

@@ -47,13 +47,13 @@ public class Options {
 		//Detecting Number of lines 
 		rows = indexes(ysorted, "y");
 		cols = indexes(xsorted, "x");
-		System.out.println("incRows ind"+rows.size()+" data "+rows.toString());
-		System.out.println("incCols ind"+cols.size()+" data "+cols.toString());
+		System.out.println("incRows ind "+rows.size()+" data "+rows.toString());
+		System.out.println("incCols ind "+cols.size()+" data "+cols.toString());
 		//Removing Lines that are expected wrong
 		rows = fxindexes(rows, ymaxoff, yminoff);
 		cols = fxindexes(cols, xmaxoff, xminoff,xmaxgap,xmingap);
-		System.out.println("incRows ind"+rows.size()+" data "+rows.toString());
-		System.out.println("incCols ind"+cols.size()+" data "+cols.toString());
+		System.out.println("Fixed index "+rows.size()+" data "+rows.toString());
+		System.out.println("Fixed index "+cols.size()+" data "+cols.toString());
 		//Organizing all options circle according to line number
 		//optsbyline = byline();
 		//System.out.println(optsbyline.toString());
@@ -195,11 +195,12 @@ public class Options {
 		
 	}
 	private JsonArray indexes(List<JsonObject> in,String axis) {
+		//System.out.println("Indexes With axis as "+axis);
 		JsonArray l = new JsonArray();
 		for (int i = 0; i < in.size(); i++) {
 			if(i+1 != in.size()){
 				int sub = in.get(i+1).get(axis).getAsInt() -in.get(i).get(axis).getAsInt();
-				//System.out.println(in.get(i+1).get(axis).getAsInt() +"-"+in.get(i).get(axis).getAsInt());
+				//System.out.println(in.get(i+1).get(axis).getAsInt() +"-"+in.get(i).get(axis).getAsInt()+" = "+sub);
 				if(sub >=12){
 					//System.out.println("ADDED"+sub);
 					if(l.size() == 0){
@@ -208,7 +209,6 @@ public class Options {
 					}else{
 						l.add(in.get(i+1).get(axis));
 					}
-					
 				}
 			}
 		}
